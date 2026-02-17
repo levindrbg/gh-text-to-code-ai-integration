@@ -1,0 +1,137 @@
+# Workflow: GH components and 03_python scripts
+Date: 2025-02-17
+
+## Overview
+
+The Grasshopper definition is a linear pipeline. Each step is one (or more) GH components; Python logic lives in 03_python and is called via exec() from GHPython components in 02_grasshopper.
+
+Data flow:
+  User prompt → [optional: RAG context] → Interpreter (structured JSON) → Generator (script) → Executor → [optional: optimization] → Geometry
+
+Updated: Added interpreter step to parse prompt into structured JSON before script generation.
+
+================================================================================
+STEP 1 — PROMPT INTERFACE
+================================================================================
+
+Purpose: User-facing input for the whole workflow.
+
+GH components:
+  - Panel (or similar): free-text prompt, e.g. "Gable roof, 12 m span, 4 m height, steel"
+  - Optional: sliders/inputs for span, height, typology, material (can be fed into prompt or later steps)
+
+Output:
+  - user_prompt (string) → wired into Step 2 (RAG, optional) and Step 3 (Interpreter)
+
+03_python:
+  - No script. Pure GH Panel/drivers.
+
+----------------------------------------------------------------------
+STEP 2 — RAG QUERY (OPTIONAL)
+----------------------------------------------------------------------
+
+Purpose: Retrieve relevant chunks from Pinecone (code snippets, formulas, typology rules) to ground the LLM.
+
+GH components:
+  - One GHPython component (optional).
+  - Input: user_prompt (from Step 1).
+  - Output: context_chunks (list of {text, score} dicts) for Step 4 (Generator).
+
+03_python: rag_query.py. GH: copy 04_gh_python/ttc_gh_rag.py into component.
+
+----------------------------------------------------------------------
+STEP 3 — INTERPRETER (TTC_INTERPRETER)
+----------------------------------------------------------------------
+
+Purpose: Parse natural language user prompt into structured JSON. This ensures consistent parameter extraction before script generation.
+
+GH components:
+  - One GHPython component.
+  - Input: user_prompt (from Step 1), optional run_id.
+  - Output: structured_prompt (dict) conforming to schemas/structured_prompt.json.
+
+03_python: ttc_interpreter.py. GH: copy 04_gh_python/ttc_gh_interpreter.py into component.
+  Saves: 03_python/prompt/[run_id]/structured_prompt.json. Schema: schemas/structured_prompt.json.
+
+----------------------------------------------------------------------
+STEP 4 — GENERATOR (TTC_GENERATOR)
+----------------------------------------------------------------------
+
+Purpose: Generate Python script for geometry computation from structured prompt + optional RAG context.
+
+GH components:
+  - One GHPython component.
+  - Input: run_id (to find structured_prompt.json) OR auto-find latest, optional context_chunks (from Step 2).
+  - Output: script_str (executable Python script string).
+
+03_python: ttc_generator.py. GH: copy 04_gh_python/ttc_gh_generator.py into component.
+  Reads prompt from 03_python/prompt/[run_id]/ or latest. Returns script_str.
+
+----------------------------------------------------------------------
+STEP 5 — SCRIPT EXECUTOR
+----------------------------------------------------------------------
+
+Purpose: Execute the generated script and capture its JSON output.
+
+GH components:
+  - One GHPython component.
+  - Input: script_str (from Step 4).
+  - Output: structural_result (dict: nodes, members, loads, etc.).
+
+03_python: script_executor.py. GH: copy 04_gh_python/ttc_gh_executor.py into component.
+
+----------------------------------------------------------------------
+STEP 6 — JOINT CONNECTION / OPTIMIZATION
+----------------------------------------------------------------------
+
+Purpose: Take the structural output from Step 3 (nodes, maybe initial members) and run topology/sizing optimization (e.g. BESO, ground structure, iterative sizing). Optional: can be skipped if the LLM output is already final.
+
+GH components:
+  - One GHPython component.
+  - Input: structural_result (from Step 5) — or nodes + initial members.
+  - Output: optimized structural_result (same schema: nodes, members, loads, results).
+
+03_python: optimization/. GH: copy 04_gh_python/ttc_gh_optimization.py (pass-through until implemented).
+
+----------------------------------------------------------------------
+STEP 7 — CODE TO GEOMETRY COMPILER
+----------------------------------------------------------------------
+
+Purpose: Turn the final structural JSON (nodes, members) into Rhino geometry for visualization and Karamba.
+
+GH components:
+  - One GHPython component.
+  - Input: structural_result (dict from Step 6, or Step 5 if Step 6 skipped).
+  - Output: lines (list of Rhino.Geometry.Line or Curve), points (list of Point3d), and optionally separate lists for supports, loads for Karamba.
+
+03_python: geometry_builder.py. GH: copy 04_gh_python/ttc_gh_geometry.py into component.
+  Output: lines, points for Karamba3D.
+
+================================================================================
+SUMMARY: COMPONENTS IN THE GH FILE
+================================================================================
+
+1. Prompt interface       → Panel (and optional sliders). Output: user_prompt.
+2. RAG query (optional)   → GHPython: 04_gh_python/ttc_gh_rag.py. Input: user_prompt. Output: context_chunks.
+3. Interpreter            → GHPython: 04_gh_python/ttc_gh_interpreter.py. Input: user_prompt, run_id. Output: structured_prompt, run_id.
+4. Generator              → GHPython: 04_gh_python/ttc_gh_generator.py. Input: run_id, context_chunks. Output: script_str.
+5. Script executor        → GHPython: 04_gh_python/ttc_gh_executor.py. Input: script_str. Output: structural_result.
+6. Joint connection / opt → GHPython: 04_gh_python/ttc_gh_optimization.py. Input: structural_result. Output: structural_result.
+7. Code to Geometry       → GHPython: 04_gh_python/ttc_gh_geometry.py. Input: structural_result. Output: lines, points.
+
+Downstream (optional): Karamba3D components for cross section, material, supports, loads, Assemble, Analyze, visualization.
+
+================================================================================
+03_python FILES TO IMPLEMENT
+================================================================================
+
+- rag_query.py           (Step 2, optional)
+- ttc_interpreter.py     (Step 3) — NEW: parses prompt → structured JSON
+- ttc_generator.py       (Step 4) — NEW: structured JSON → script generation
+- script_executor.py     (Step 5)
+- optimization/run.py    (Step 6; or beso.py, sizing.py, etc.)
+- geometry_builder.py    (Step 7)
+
+Config: 03_python/config/settings.py (from .env).
+GH node scripts: 04_gh_python/ (ttc_gh_interpreter, ttc_gh_generator, ttc_gh_rag, ttc_gh_executor, ttc_gh_optimization, ttc_gh_geometry).
+Schemas: 03_python/schemas/structured_prompt.json, structural_output.json.

@@ -7,7 +7,10 @@ venv/
 01_docs/
 
 # Knowledge base data for Pinecone vector space (not needed for scripting)
-04_knowledge_base/
+05_knowledge_base/
+
+# Runtime prompt parsing outputs (generated per run)
+03_python/prompt/
 
 # Python
 __pycache__/

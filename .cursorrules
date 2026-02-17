@@ -56,17 +56,10 @@ No C# components yet. Scripts live in 03_python/; edit in IDE, save, Recompute i
 │   ├── requirements.txt
 │   └── SETUP.md
 ├── 01_docs/                      ← gitignored (PDF, goals)
-├── 02_grasshopper/               ← GH workflows; GH Python components call 03_python scripts
-├── 03_python/                   ← all Python scripts called from GH
-│   ├── _loader.py
-│   ├── config/
-│   │   └── settings.example.py   → copy to settings.py (gitignored)
-│   ├── schemas/
-│   │   └── structural_output.json
-│   ├── tests/
-│   ├── optimization/
-│   └── (rag_query, llm_generate, script_executor, geometry_builder, …)
-└── 04_knowledge_base/            ← data for Pinecone vector space; gitignored
+├── 02_grasshopper/               ← GH workflow definitions (.gh files)
+├── 03_python/                   ← Python logic called from GH (rag_query, ttc_interpreter, ttc_generator, …)
+├── 04_gh_python/                ← scripts to copy into GHPython nodes (ttc_gh_interpreter, ttc_gh_generator, …)
+└── 05_knowledge_base/           ← data for Pinecone vector space; gitignored
 ```
 
 ---

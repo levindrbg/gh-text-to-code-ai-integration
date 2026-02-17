@@ -6,7 +6,8 @@
 - `01_docs/` — PDF and goals (gitignored)
 - `02_grasshopper/` — Grasshopper workflows; GH Python components call `03_python` scripts
 - `03_python/` — all Python scripts called from GH: config, schemas, tests, optimization
-- `04_knowledge_base/` — data for Pinecone vector space (gitignored)
+- `04_gh_python/` — scripts to copy into GHPython components
+- `05_knowledge_base/` — data for Pinecone vector space (gitignored)
 
 ## 2. Virtual environment (venv)
 
