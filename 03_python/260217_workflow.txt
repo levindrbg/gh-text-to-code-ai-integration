@@ -43,15 +43,20 @@ GH components:
 STEP 3 — INTERPRETER (TTC_INTERPRETER)
 ----------------------------------------------------------------------
 
-Purpose: Parse natural language user prompt into structured JSON. This ensures consistent parameter extraction before script generation.
+Purpose: Parse user prompt into structured JSON. Run timer creates run IDs; LLM fills schema, infers where logical, asks for clarification when needed. Two-part output: Structure (JSON) and Answer (communication).
 
 GH components:
-  - One GHPython component.
-  - Input: user_prompt (from Step 1), optional run_id.
-  - Output: structured_prompt (dict) conforming to schemas/structured_prompt.json.
+  - One GHPython component. Trigger: button or recompute to run (each run creates a new run_id).
+  - Input:  x = prompt (str) — original user prompt (what structure they want to design).
+  - Output: a = Answer (str) — LLM communication: questions for clarification or brief summary.
+  - Output: b = Structure (dict) — filled JSON conforming to schemas/structured_prompt.json.
+  - Output: c = run_id (str) — for Generator step.
 
-03_python: ttc_interpreter.py. GH: copy 04_gh_python/ttc_gh_interpreter.py into component.
-  Saves: 03_python/prompt/[run_id]/structured_prompt.json. Schema: schemas/structured_prompt.json.
+03_python: ttc_interpreter.py.
+  - Run timer: create_run_id(), get_latest_run_id(); fetch JSON structure (schema) to parse.
+  - LLM fills structure, generates info where logical; if fields missing, asks user (in Answer).
+  - Saves: 03_python/prompt/[run_id]/structured_prompt.json, communication.txt.
+  GH: copy 04_gh_python/ttc_gh_interpreter.py into component.
 
 ----------------------------------------------------------------------
 STEP 4 — GENERATOR (TTC_GENERATOR)
@@ -113,7 +118,7 @@ SUMMARY: COMPONENTS IN THE GH FILE
 
 1. Prompt interface       → Panel (and optional sliders). Output: user_prompt.
 2. RAG query (optional)   → GHPython: 04_gh_python/ttc_gh_rag.py. Input: user_prompt. Output: context_chunks.
-3. Interpreter            → GHPython: 04_gh_python/ttc_gh_interpreter.py. Input: user_prompt, run_id. Output: structured_prompt, run_id.
+3. Interpreter            → GHPython: 04_gh_python/ttc_gh_interpreter.py. Input: prompt. Output: Answer, Structure, run_id. (Button/recompute to run.)
 4. Generator              → GHPython: 04_gh_python/ttc_gh_generator.py. Input: run_id, context_chunks. Output: script_str.
 5. Script executor        → GHPython: 04_gh_python/ttc_gh_executor.py. Input: script_str. Output: structural_result.
 6. Joint connection / opt → GHPython: 04_gh_python/ttc_gh_optimization.py. Input: structural_result. Output: structural_result.
