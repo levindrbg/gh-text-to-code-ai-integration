@@ -1,0 +1,309 @@
+# PROJECT CONTEXT
+This repository is a Grasshopper plugin for AI-assisted structural optimization of roof systems
+(Dachkonstruktion). It extends the "text-to-code" methodology from prior research on truss
+optimization to roof typologies: ridge beams, hip/valley rafters, purlins, and node elements.
+
+## Architecture Overview
+
+The workflow is entirely Grasshopper-native. n8n is used ONLY offline to populate the
+Pinecone vector database (chunking + embedding documents). At runtime, Grasshopper talks
+directly to Pinecone and the LLM API via HTTP — no n8n involved.
+
+```
+[n8n — offline, one-time setup only]
+  Google Drive (papers + code snippets)
+    → chunk → embed (use a non-OpenAI embedding provider; this project is Claude-only)
+    → Pinecone namespace
+
+[Grasshopper — runtime, everything else]
+  User prompt (GH Panel)
+    → RAG Query Component (GHPython)
+        HTTP POST to Pinecone /query
+        returns top-k relevant chunks
+    → LLM Generation Component (GHPython)
+        HTTP POST to Anthropic Claude API only (no OpenAI)
+        system prompt + retrieved context + user prompt
+        returns Python script as string
+    → Script Execution Component (GHPython)
+        exec() the generated script in CPython 3
+        captures JSON output string
+    → Geometry Builder Component (GHPython)
+        parses JSON → Rhino.Geometry.Line / Point3d
+    → Karamba3D components (native GH)
+        cross section, material, supports, loads
+        FEM solver, visualization
+```
+
+## Current setup: Python-only (Option A)
+
+All logic runs as GHPython scripts loaded via exec(open("path/to/script.py").read(), ctx).
+No C# components yet. Scripts live in 03_python/; edit in IDE, save, Recompute in GH.
+
+(Optional future: PRODUCTION layer as compiled C# components in /src/ mirroring this logic.)
+
+---
+
+# REPOSITORY STRUCTURE
+
+```
+/
+├── .cursorrules
+├── .env                         ← from 00_setup/.env.example; gitignored
+├── .gitignore
+├── README.md
+├── 00_setup/
+│   ├── .env.example
+│   ├── requirements.txt
+│   └── SETUP.md
+├── 01_docs/                      ← gitignored (PDF, goals)
+├── 02_grasshopper/               ← GH workflows; GH Python components call 03_python scripts
+├── 03_python/                   ← all Python scripts called from GH
+│   ├── _loader.py
+│   ├── config/
+│   │   └── settings.example.py   → copy to settings.py (gitignored)
+│   ├── schemas/
+│   │   └── structural_output.json
+│   ├── tests/
+│   ├── optimization/
+│   └── (rag_query, llm_generate, script_executor, geometry_builder, …)
+└── 04_knowledge_base/            ← data for Pinecone vector space; gitignored
+```
+
+---
+
+# API INTEGRATION PATTERNS
+## Claude only — no OpenAI. All HTTP via urllib.request (no SDKs).
+
+### Pinecone REST Query (rag_query.py pattern)
+When using RAG, embed the user query with a non-OpenAI provider (e.g. Cohere, Voyage, or ingest via n8n). This project does not use OpenAI. Example: call your chosen embedding API via urllib, then POST the vector to Pinecone /query with Api-Key and Content-Type. Omit RAG entirely if you start with a fixed system prompt + code snippets.
+
+### Claude (Anthropic) Messages API — llm_generate.py pattern
+```python
+import urllib.request, json, os
+
+def generate_script(user_prompt: str, context_chunks: list[dict]) -> str:
+    """
+    Sends prompt + RAG context to Anthropic Claude API, returns generated Python script string.
+    Claude only; no OpenAI.
+    """
+    API_KEY = os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("CLAUDE_API_KEY")
+    if not API_KEY:
+        raise ValueError("Set ANTHROPIC_API_KEY or CLAUDE_API_KEY in .env")
+
+    context_text = "\n\n---\n\n".join(c["text"] for c in context_chunks) if context_chunks else ""
+
+    system_prompt = f"""You are a structural engineering code generator for Grasshopper/Karamba3D.
+Your task: write a self-contained Python 3 script that generates a structural roof system.
+
+KNOWLEDGE BASE CONTEXT (use this to ground your implementation):
+{context_text}
+
+OUTPUT RULES:
+- Output ONLY executable Python 3 code, no markdown fences, no explanation
+- The script must end by printing a single JSON string conforming to the structural_output schema
+- Use only: numpy, scipy, json, math, os, sys (no matplotlib, no pandas)
+- All units: meters for geometry, kN for forces, MPa for stress, cm² for cross-sections
+- Include a main() function; call it at the end with: if __name__ == "__main__" or always
+"""
+
+    payload = json.dumps({
+        "model": "claude-sonnet-4-20250514",
+        "max_tokens": 8192,
+        "system": system_prompt,
+        "messages": [{"role": "user", "content": user_prompt}],
+        "temperature": 0.2
+    }).encode()
+
+    req = urllib.request.Request(
+        "https://api.anthropic.com/v1/messages",
+        data=payload,
+        headers={
+            "x-api-key": API_KEY,
+            "anthropic-version": "2023-06-01",
+            "Content-Type": "application/json"
+        }
+    )
+    with urllib.request.urlopen(req) as r:
+        data = json.loads(r.read())
+    # Response: content is list of blocks; first text block has .text
+    for block in data.get("content", []):
+        if block.get("type") == "text":
+            return block["text"]
+    raise ValueError("No text content in Claude response")
+```
+
+### Script Execution (script_executor.py pattern)
+```python
+import io, sys, json
+
+def execute_generated_script(script_str: str) -> dict:
+    """
+    exec()'s the generated script, captures stdout, parses JSON output.
+    Returns the parsed structural result dict, or raises on failure.
+    """
+    stdout_capture = io.StringIO()
+    old_stdout = sys.stdout
+    sys.stdout = stdout_capture
+
+    exec_globals = {}
+    try:
+        exec(compile(script_str, "<llm_generated>", "exec"), exec_globals)
+    finally:
+        sys.stdout = old_stdout
+
+    output = stdout_capture.getvalue().strip()
+
+    # Find the last JSON object in stdout (script may print debug before final JSON)
+    for line in reversed(output.splitlines()):
+        line = line.strip()
+        if line.startswith("{") and line.endswith("}"):
+            return json.loads(line)
+
+    raise ValueError(f"No valid JSON found in script output. Got:\n{output}")
+```
+
+---
+
+# GHPython DYNAMIC LOADING PATTERN
+## Use in GH Python components (02_grasshopper). Scripts live in 03_python.
+
+```python
+# Paste into GHPython component (CPython 3 mode in Rhino 8 ScriptEditor)
+import os, sys
+
+REPO_ROOT = r"C:\path\to\repo"  # set once per machine; or from GH panel input
+SCRIPTS_DIR = os.path.join(REPO_ROOT, "03_python")
+
+if SCRIPTS_DIR not in sys.path:
+    sys.path.insert(0, SCRIPTS_DIR)
+
+# Load .env from repo root (03_python/config/settings.py)
+config_path = os.path.join(REPO_ROOT, "03_python", "config", "settings.py")
+exec(open(config_path).read())
+
+# Run the target script; pass GH inputs via context
+script_path = os.path.join(SCRIPTS_DIR, "rag_query.py")
+ctx = {"ghenv": ghenv, "user_prompt": x}
+exec(open(script_path).read(), ctx)
+a = ctx.get("result")
+```
+
+---
+
+# JSON SCHEMA CONTRACT
+## The canonical interface between exec()'d scripts and Grasshopper geometry builder
+## All LLM-generated scripts MUST output JSON conforming to this structure
+
+```json
+{
+  "metadata": {
+    "typology": "gable_roof | hip_roof | flat_truss | cantilever",
+    "span_m": 0.0,
+    "height_m": 0.0,
+    "iterations": 0,
+    "timestamp": "ISO8601"
+  },
+  "nodes": [
+    { "id": 0, "x": 0.0, "y": 0.0, "z": 0.0, "is_support": false }
+  ],
+  "members": [
+    {
+      "id": 0,
+      "start_node": 0,
+      "end_node": 1,
+      "length_m": 0.0,
+      "area_cm2": 0.0,
+      "force_kN": 0.0,
+      "stress_MPa": 0.0,
+      "material": "steel | timber | cfrp",
+      "section_type": "SHS | RHS | circular | rectangular",
+      "width_mm": 0.0,
+      "height_mm": 0.0
+    }
+  ],
+  "loads": [
+    { "node_id": 0, "Fx_kN": 0.0, "Fy_kN": 0.0, "Fz_kN": 0.0 }
+  ],
+  "results": {
+    "max_displacement_mm": 0.0,
+    "max_stress_MPa": 0.0,
+    "total_volume_m3": 0.0,
+    "converged": true
+  }
+}
+```
+
+---
+
+# ENVIRONMENT & DEPENDENCIES
+
+## Python (03_python/ and 03_python/tests/)
+- Runtime: CPython 3.9+ (Rhino 8 ScriptEditor — select "CPython 3" in component settings)
+- Standard library only for HTTP: urllib.request, json, os, sys, io
+- Scientific: numpy, scipy (available in Rhino 8 CPython environment)
+- Rhino/GH available when running inside GH: import Rhino, Rhino.Geometry as rg
+- Karamba API available in GH: import clr; clr.AddReference("KarambaCommon")
+- For standalone testing: guard Rhino imports with try/except ImportError
+- NEVER use: requests, pinecone SDK, openai SDK, anthropic SDK — use urllib.request only. LLM = Claude (Anthropic) only, no OpenAI.
+- NEVER use: pandas, matplotlib (not in Rhino 8 env by default)
+- API keys: from .env at repo root; 03_python/config/settings.py uses python-dotenv to load into os.environ
+
+## config/settings.py (03_python/config/; gitignored)
+Copy from settings.example.py. Loads .env from repo root (parents[2]). Claude only.
+
+## C# (future /src/)
+- Not used in Option A. When added: net48, Grasshopper SDK, same patterns as in cursorrules.
+
+---
+
+# CODING CONVENTIONS
+
+## Python scripts (03_python/)
+- Physical units: meters for geometry, kN for forces, MPa for stress, cm² for cross-sections
+- Every function has a docstring stating: inputs, outputs, units, algorithm reference
+- JSON output: always via print(json.dumps(...)) at the end of main(), never intermediate prints
+- Error handling: raise ValueError with descriptive messages — GHPython catches and shows in component
+- Guard Rhino imports: `try: import Rhino; HAS_RHINO = True \nexcept ImportError: HAS_RHINO = False`
+- Scripts must work in BOTH contexts: inside GH (Rhino available) and standalone pytest (Rhino absent)
+- Type hints required on all function signatures (PEP 484)
+
+---
+
+# STRUCTURAL DOMAIN KNOWLEDGE
+
+## Roof Typology Conventions
+- Gable roof: ridge beam along centerline, rafters from ridge to wall plates, purlins optional
+- Hip roof: ridge + hip rafters at ~45° to corners, jack rafters infilling
+- Coordinate system: X = span direction, Y = longitudinal direction, Z = vertical (up)
+- Support conditions: pinned at wall plate nodes (all translation DOFs fixed, rotations free)
+- Loads (DIN EN 1991-1-3/1-4): snow 0.8–2.0 kN/m², wind varies, self-weight from section
+
+## Optimization Algorithms in Use
+- BESO: topology optimization — iteratively remove low-stress members from ground structure
+- Iterative Sizing: proportional area redistribution, constant total volume
+- Ground Structure Method: dense initial mesh, converge to efficient topology
+- All generated scripts: implement main() and end with print(json.dumps(result))
+
+## Karamba3D (inside GH, GHPython)
+- Always use Karamba factory/builder pattern — never instantiate Karamba objects directly
+- Key inputs to Assemble Model: geometry (lines), supports, cross-sections, materials, loads
+- Output from Analyze: displacement, utilization, internal forces per member
+
+---
+
+# WHAT TO GENERATE vs. NOT
+
+## Always generate:
+- Standalone-testable Python functions with docstrings and type hints
+- urllib.request-based HTTP calls (never requests or SDK imports)
+- try/except guards around Rhino imports for testability
+- Test stubs in 03_python/tests/ for new optimization functions
+- 03_python/config/settings.example.py entries for any new environment variables
+
+## Never generate:
+- Hardcoded API keys or absolute file paths
+- Intermediate print() calls in scripts (only the final JSON print)
+- IronPython 2.7 syntax (xrange, print statement, unicode literals u"...")
+- JSON that deviates from 03_python/schemas/structural_output.json
+- requests, openai, anthropic, pinecone library imports — use urllib.request only; LLM = Claude (Anthropic) only
+- n8n workflow modifications — n8n is READ-ONLY for RAG ingestion, not runtime
