@@ -1,7 +1,10 @@
 # GH component 2: Fetch gen_script output (Karamba data) for a run_id.
+# This file is in the repo (02_grasshopper) only for editing. Copy-paste its contents
+# into a GHPython component in TTC_Workflow_V1.gh. Path logic must work when run
+# inside the component (__file__ may be absent).
 #
 # GHPython (CPython 3, Rhino 8):
-#   Input  run_id: str — from the send-prompt component (output b)
+#   Input  run_id: str — from the send-prompt component (output run_id)
 #   Input  run:    wire Button — click to fetch
 #   Output a: communication / status (str)
 #   Output b: Line_Elements (list of Rhino.Geometry.Line)
@@ -12,11 +15,28 @@
 
 import os
 import sys
+from pathlib import Path
 
-REPO_ROOT = r"C:\Users\levin\Documents\GitHub\gh-text-to-code-ai-integration"
+# Repo root for component runtime: cwd-based (__file__ unreliable when pasted)
+def _repo_root():
+    try:
+        p = Path(__file__).resolve()
+        if "02_grasshopper" in p.parts:
+            return p.parent.parent
+    except Exception:
+        pass
+    cwd = Path(os.getcwd()).resolve()
+    if cwd.name == "02_grasshopper":
+        return cwd.parent
+    if (cwd / "03_python").is_dir() and (cwd / "00_setup").is_dir():
+        return cwd
+    return cwd
+
+REPO_ROOT = str(_repo_root())
 SCRIPTS_DIR = os.path.join(REPO_ROOT, "03_python")
 if SCRIPTS_DIR not in sys.path:
     sys.path.insert(0, SCRIPTS_DIR)
+os.environ["TTC_03_PYTHON"] = os.path.abspath(SCRIPTS_DIR)
 
 from ttc_main import load_karamba_output
 

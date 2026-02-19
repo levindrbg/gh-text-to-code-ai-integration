@@ -83,9 +83,8 @@ def run(
 
     except Exception as e:
         result["error"] = str(e)
+        result["communication"] = ""  # never put errors in communication; only in run_commentary
         log.append("Error: {}".format(e))
-        if not result["communication"]:
-            result["communication"] = f"Error: {e}"
 
     result["run_commentary"] = "\n".join(log)
     return result

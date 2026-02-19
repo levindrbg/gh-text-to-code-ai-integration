@@ -4,12 +4,12 @@
 
 # Structure
 
-- **03_python**: All steps run locally (interpreter, generator, script execution, geometry as data). Entry point: `ttc_main.run(prompt)` → communication, run_id, structure, structural_result, lines, points.
-- **04_gh_python**: Single input component only. Paste **ttc_gh_run.py** into one GHPython component: it sends `prompt` to the pipeline and outputs communication, run_id, structure, structural_result, and Rhino lines/points. No other GH Python scripts.
+- **03_python**: All steps run locally (interpreter, generator, script execution, geometry as data). Entry point: `ttc_main.run(prompt)`.
+- **02_grasshopper/gh_python**: GH Python component scripts live here as **.py files in the repo only for editing**. They are **copy-pasted** into GHPython components inside **TTC_Workflow_V1.gh** (in 02_grasshopper); they do not run as files from disk. Path and directory logic in these scripts must work for the **GHPython component runtime** (when pasted into the component), not for running the .py files themselves. Assume `__file__` may be absent or point to the .gh document; use `os.getcwd()` and/or a configurable repo root so paths resolve correctly when the component runs.
 
 # Grasshopper
 
-- Use **CPython 3** (Rhino 8). The only GH script is **04_gh_python/ttc_gh_run.py**: it adds **03_python** to `sys.path`, calls `ttc_main.run(prompt)`, and maps results to GH outputs (including Rhino.Geometry for lines/points).
+- Use **CPython 3** (Rhino 8). Two scripts in **02_grasshopper/gh_python**: **ttc_gh_send_prompt.py** (send prompt, run pipeline → communication, run_id, run_commentary) and **ttc_gh_fetch_output.py** (fetch Karamba output by run_id). Paste each into its own GHPython component in **TTC_Workflow_V1.gh**. Paths in those scripts must resolve when run inside the component (cwd may be Rhino/GH-dependent).
 - **n8n** is offline-only (RAG ingest). At runtime GH → pipeline in 03_python → HTTP to LLM as needed.
 
 # File naming best practice
@@ -24,4 +24,4 @@
 
 - **Use:** `numpy`, `scipy`, `json`, `math`, `os`, `sys`, `io`; HTTP via **`urllib.request`** only (no SDKs). In GH: `Rhino`, `Rhino.Geometry`, Karamba via `clr`.
 - **Do not use:** `requests`, `pinecone`, `openai`, `anthropic` SDKs; no `pandas`, `matplotlib` (not in Rhino 8’s env). LLM = **Claude (Anthropic)** only; no OpenAI.
-- API keys: from `.env` at repo root; in Rhino either `python-dotenv` or a manual .env parse (see 04_gh_python scripts).
+- API keys: from `.env` in **00_setup**; in GH components use a manual .env parse or dotenv (see 02_grasshopper/gh_python scripts).

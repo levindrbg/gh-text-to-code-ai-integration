@@ -1,7 +1,7 @@
 """
 TTC Interpreter — Create full semantic outline of Truss from user prompt.
 
-- Fetches structure outline (form) from empty_schemas/structure_outline.json.
+- Fetches structure outline (form) from empty_schemes/structure_outline.json.
 - Calls LLM to fill the form from the user prompt.
 - Saves semantic outline and communication in 03_python/run_output/[run_id]/.
 """
@@ -15,9 +15,12 @@ from pathlib import Path
 from datetime import datetime
 from typing import Dict, Any, Tuple, Optional
 
-# Schema file we use (only this; no "schemas" or "structured_prompt")
+# Structure outline: folder is "empty_schemes" (not "empty_schemas" or "schemas")
 _STRUCTURE_OUTLINE_BASENAME = "structure_outline.json"
-_EMPTY_SCHEMAS_DIR = "empty_schemas"
+_EMPTY_SCHEMAS_DIR = "empty_schemes"
+
+# Hardcoded path so component runtime always finds the file (edit if your repo is elsewhere)
+_STRUCTURE_OUTLINE_HARDCODED = Path(r"C:\Users\levin\Documents\GitHub\gh-text-to-code-ai-integration\03_python\empty_schemes\structure_outline.json")
 
 def _load_env_file(env_path: Path) -> None:
     """Load KEY=value lines from .env into os.environ."""
@@ -60,18 +63,30 @@ if _env_path.exists():
 
 
 def _python_dir() -> Path:
-    """03_python directory. Resolve via __file__, sys.path, or cwd — never use 'schemas' or 'structured_prompt'."""
+    """03_python directory. Prefer hardcoded path, then TTC_03_PYTHON, __file__, sys.path, cwd."""
+    # 0. Hardcoded full path (reliable when pasted into GH component)
+    if _STRUCTURE_OUTLINE_HARDCODED.exists():
+        return _STRUCTURE_OUTLINE_HARDCODED.parent.parent  # 03_python
+    # 1. Explicit path set by GH script
+    env_base = os.environ.get("TTC_03_PYTHON")
+    if env_base:
+        p = Path(env_base).resolve()
+        schema_file = p / _EMPTY_SCHEMAS_DIR / _STRUCTURE_OUTLINE_BASENAME
+        if schema_file.exists():
+            return p
     # 1. Same folder as this script (03_python)
     try:
         p = Path(__file__).resolve().parent
-        if (p / _EMPTY_SCHEMAS_DIR / _STRUCTURE_OUTLINE_BASENAME).exists():
+        schema_file = p / _EMPTY_SCHEMAS_DIR / _STRUCTURE_OUTLINE_BASENAME
+        if schema_file.exists():
             return p
     except Exception:
         pass
     # 2. sys.path[0] when GH adds 03_python to path
     if sys.path:
         sp = Path(sys.path[0]).resolve()
-        if (sp / _EMPTY_SCHEMAS_DIR / _STRUCTURE_OUTLINE_BASENAME).exists():
+        schema_file = sp / _EMPTY_SCHEMAS_DIR / _STRUCTURE_OUTLINE_BASENAME
+        if schema_file.exists():
             return sp
     # 3. cwd or cwd/03_python
     cwd = Path(os.getcwd()).resolve()
@@ -88,7 +103,9 @@ def _python_dir() -> Path:
                 return parent / "03_python"
     except Exception:
         pass
-    # Fallback: assume 03_python is parent of this file
+    # Fallback: use TTC_03_PYTHON even if file check failed (path might be correct, file might be missing)
+    if env_base:
+        return Path(env_base).resolve()
     return Path(__file__).resolve().parent
 
 
@@ -131,13 +148,22 @@ def create_run_id() -> str:
 
 
 def _load_structure_outline() -> Dict[str, Any]:
-    """Fetch structure outline from 03_python/empty_schemas/structure_outline.json only."""
+    """Fetch structure outline; prefer hardcoded path (03_python/empty_schemes/), then _python_dir()."""
+    try:
+        with open(_STRUCTURE_OUTLINE_HARDCODED) as f:
+            return json.load(f)
+    except FileNotFoundError:
+        pass
     base = _python_dir()
     path = base / _EMPTY_SCHEMAS_DIR / _STRUCTURE_OUTLINE_BASENAME
-    if not path.exists():
-        raise FileNotFoundError(f"Structure outline not found. Expected: {path} (use 03_python/empty_schemas/, not schemas/)")
-    with open(path) as f:
-        return json.load(f)
+    try:
+        with open(path) as f:
+            return json.load(f)
+    except FileNotFoundError:
+        raise FileNotFoundError(
+            f"Structure outline not found. Tried hardcoded: {_STRUCTURE_OUTLINE_HARDCODED} and {path}. "
+            "Folder must be 03_python/empty_schemes/. Restart Rhino after editing the script so it loads fresh code."
+        )
 
 
 def parse_prompt_to_structured(
@@ -147,7 +173,7 @@ def parse_prompt_to_structured(
     """
     Create full semantic outline of Truss from user prompt.
 
-    - Fetches structure outline from empty_schemas/structure_outline.json.
+    - Fetches structure outline from empty_schemes/structure_outline.json.
     - Asks LLM to fill the form; infers where logical, asks for clarification otherwise.
     - Saves in 03_python/run_output/[run_id]/: semantic_outline.json, communication.txt.
 
