@@ -1,0 +1,7 @@
+{
+  "description": "Structure of Karamba input items for Generator (what the gen script output must provide).",
+  "line_elements": "List of line members: top chord, bottom chord, diagonals. Each: start/end node indices or coordinates.",
+  "support": "Support points: node indices or coordinates, support type (pinned/fixed/roller).",
+  "loads": "Load forces applied at load points: Fx, Fy, Fz per point (kN).",
+  "load_points": "Nodes where lines meet and where forces are applied (coordinates or node ids)."
+}

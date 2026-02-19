@@ -1,0 +1,28 @@
+Your script MUST define and call this output function. The pipeline executes the script and captures the return value.
+
+def get_karamba_output():
+    """Return the structure as JSON-serializable dict for Karamba/GH import."""
+    return {
+        "line_elements": [
+            {"start": [x1, y1, z1], "end": [x2, y2, z2]},
+            # ... all lines: top chord, bottom chord, diagonals
+        ],
+        "support": [
+            {"point": [x, y, z], "type": "pinned"},
+            # ... support points
+        ],
+        "loads": [
+            {"point": [x, y, z], "Fx_kN": 0.0, "Fy_kN": 0.0, "Fz_kN": -1.0},
+            # ... one per load point (kN)
+        ],
+        "load_points": [
+            [x, y, z],
+            # ... nodes where lines meet and forces applied
+        ],
+    }
+
+# At end of script:
+if __name__ == "__main__":
+    out = get_karamba_output()
+    import json
+    print(json.dumps(out))

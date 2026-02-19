@@ -1,0 +1,12 @@
+{
+  "description": "Boundary conditions and requirements for truss generation (used in Generator system prompt).",
+  "truss_types_allowed": ["gable_roof", "hip_roof", "flat_truss", "cantilever", "shed_roof", "mansard_roof"],
+  "units": {
+    "length": "m",
+    "force": "kN",
+    "stress": "MPa",
+    "area": "cm2"
+  },
+  "constraints": [],
+  "defaults": {}
+}
