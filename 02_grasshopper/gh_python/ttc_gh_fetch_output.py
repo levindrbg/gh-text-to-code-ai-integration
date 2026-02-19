@@ -1,38 +1,28 @@
 # GH component 2: Fetch gen_script output (Karamba data) for a run_id.
-# This file is in the repo (02_grasshopper) only for editing. Copy-paste its contents
-# into a GHPython component in TTC_Workflow_V1.gh. Path logic must work when run
-# inside the component (__file__ may be absent).
+# Copy-paste into a GHPython component in TTC_Workflow_V1.gh.
+# Logic: get run_id → look up run_output/[run_id] → load karamba_output.json. No button needed.
 #
 # GHPython (CPython 3, Rhino 8):
-#   Input  run_id: str — from the send-prompt component (output run_id)
-#   Input  run:    wire Button — click to fetch
-#   Output a: communication / status (str)
-#   Output b: Line_Elements (list of Rhino.Geometry.Line)
-#   Output c: Support (list of {point, type})
-#   Output d: Loads (list of {point, Fx_kN, Fy_kN, Fz_kN})
-#   Output e: Load_Points (list of Rhino.Geometry.Point3d)
-#   Output f: error (str or None)
+#   Input  run_id: str — wire from send-prompt component (output run_id); recomputes when run_id changes
+#   Output status: str (OK or message)
+#   Output Line_Elements: list of Rhino.Geometry.Line
+#   Output Support: list of {point, type}
+#   Output Loads: list of {point, Fx_kN, Fy_kN, Fz_kN}
+#   Output Load_Points: list of Rhino.Geometry.Point3d
 
 import os
 import sys
 from pathlib import Path
 
-# Repo root for component runtime: cwd-based (__file__ unreliable when pasted)
-def _repo_root():
-    try:
-        p = Path(__file__).resolve()
-        if "02_grasshopper" in p.parts:
-            return p.parent.parent
-    except Exception:
-        pass
-    cwd = Path(os.getcwd()).resolve()
-    if cwd.name == "02_grasshopper":
-        return cwd.parent
-    if (cwd / "03_python").is_dir() and (cwd / "00_setup").is_dir():
-        return cwd
-    return cwd
+# Hardcode repo root so 03_python is always found when pasted into GH (Rhino cwd/__file__ are unreliable)
+REPO_ROOT = r"C:\Users\levin\Documents\GitHub\gh-text-to-code-ai-integration"
+if not os.path.isdir(os.path.join(REPO_ROOT, "03_python")):
+    _cwd = Path(os.getcwd()).resolve()
+    if (_cwd / "03_python").is_dir():
+        REPO_ROOT = str(_cwd)
+    elif _cwd.name == "02_grasshopper" and (_cwd.parent / "03_python").is_dir():
+        REPO_ROOT = str(_cwd.parent)
 
-REPO_ROOT = str(_repo_root())
 SCRIPTS_DIR = os.path.join(REPO_ROOT, "03_python")
 if SCRIPTS_DIR not in sys.path:
     sys.path.insert(0, SCRIPTS_DIR)
@@ -85,19 +75,16 @@ def _parse_karamba_to_gh(karamba):
 
 run_id_str = str(run_id).strip() if run_id else ""
 if not run_id_str:
-    a = "No run_id provided. Run the send-prompt component first and wire its run_id output here."
-    b = []
-    c = []
-    d = []
-    e = []
-    f = None
+    status = "No run_id provided. Run the send-prompt component first and wire its run_id output here."
+    Line_Elements = []
+    Support = []
+    Loads = []
+    Load_Points = []
 else:
     try:
         karamba = load_karamba_output(run_id_str)
-        a = "OK"
-        b, c, d, e = _parse_karamba_to_gh(karamba)
-        f = None
+        status = "OK"
+        Line_Elements, Support, Loads, Load_Points = _parse_karamba_to_gh(karamba)
     except Exception as err:
-        a = ""
-        b, c, d, e = [], [], [], []
-        f = str(err)
+        status = str(err)
+        Line_Elements, Support, Loads, Load_Points = [], [], [], []

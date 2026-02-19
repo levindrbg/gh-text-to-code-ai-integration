@@ -14,22 +14,16 @@ import os
 import sys
 from pathlib import Path
 
-# Repo root for component runtime: cwd-based (__file__ unreliable when pasted)
-def _repo_root():
-    try:
-        p = Path(__file__).resolve()
-        if "02_grasshopper" in p.parts:
-            return p.parent.parent
-    except Exception:
-        pass
-    cwd = Path(os.getcwd()).resolve()
-    if cwd.name == "02_grasshopper":
-        return cwd.parent
-    if (cwd / "03_python").is_dir() and (cwd / "00_setup").is_dir():
-        return cwd
-    return cwd
+# Hardcode repo root so 03_python is always found when pasted into GH (Rhino cwd/__file__ are unreliable)
+REPO_ROOT = r"C:\Users\levin\Documents\GitHub\gh-text-to-code-ai-integration"
+# Fallback if you moved the project: try cwd
+if not os.path.isdir(os.path.join(REPO_ROOT, "03_python")):
+    _cwd = Path(os.getcwd()).resolve()
+    if (_cwd / "03_python").is_dir():
+        REPO_ROOT = str(_cwd)
+    elif _cwd.name == "02_grasshopper" and (_cwd.parent / "03_python").is_dir():
+        REPO_ROOT = str(_cwd.parent)
 
-REPO_ROOT = str(_repo_root())
 SCRIPTS_DIR = os.path.join(REPO_ROOT, "03_python")
 if SCRIPTS_DIR not in sys.path:
     sys.path.insert(0, SCRIPTS_DIR)
