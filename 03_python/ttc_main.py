@@ -38,7 +38,7 @@ def run(
         run_id: Optional. If None, a new run_id is created here and used for the whole process.
 
     Returns:
-        Dict with: communication, run_id, structure, script_str, karamba, error.
+        Dict with: communication, run_id, structure, script_str, karamba, error, run_commentary.
     """
     result: Dict[str, Any] = {
         "communication": "",
@@ -47,35 +47,47 @@ def run(
         "script_str": "",
         "karamba": {},
         "error": None,
+        "run_commentary": "",
     }
+    log: list = []
 
     try:
         # Create run_id once and use it for the whole pipeline
         rid = run_id if run_id is not None else create_run_id()
         result["run_id"] = rid
+        log.append(f"[run_id] {rid}")
 
         # 1. Interpreter: semantic outline → run_output/[run_id]/
+        log.append("Interpreting prompt → semantic outline...")
         semantic_outline, communication, _ = parse_prompt_to_structured(prompt.strip(), run_id=rid)
         result["communication"] = communication
         result["structure"] = semantic_outline
+        log.append("Saved run_output/{}/semantic_outline.json, communication.txt".format(rid))
 
         # 2. Generator: gen_script.py → run_output/[run_id]/
+        log.append("Generating gen_script.py...")
         script_str = generate_geometry_script(semantic_outline, run_id=rid)
         result["script_str"] = script_str
+        log.append("Saved run_output/{}/gen_script.py".format(rid))
 
         # 3. Executor: run script, get Karamba JSON; save to run_output/[run_id]/karamba_output.json
+        log.append("Executing gen_script...")
         karamba = run_executor(rid)
         result["karamba"] = karamba
         run_dir = _run_output_dir() / rid
         run_dir.mkdir(parents=True, exist_ok=True)
         with open(run_dir / "karamba_output.json", "w") as f:
             json.dump(karamba, f, indent=2)
+        log.append("Saved run_output/{}/karamba_output.json".format(rid))
+        log.append("Done.")
 
     except Exception as e:
         result["error"] = str(e)
+        log.append("Error: {}".format(e))
         if not result["communication"]:
             result["communication"] = f"Error: {e}"
 
+    result["run_commentary"] = "\n".join(log)
     return result
 
 

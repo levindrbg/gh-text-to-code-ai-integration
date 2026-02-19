@@ -3,10 +3,9 @@
 # GHPython (CPython 3, Rhino 8):
 #   Input  prompt: str — user prompt (e.g. "gable truss 12 m span, steel")
 #   Input  run:    wire Button — click to run
-#   Output a: communication (str)
-#   Output b: run_id (str) — use this in the fetch-output component to get Karamba data
-#   Output c: structure (dict, semantic outline)
-#   Output d: error (str or None)
+#   Output communication: str (LLM message; includes error text if the pipeline failed)
+#   Output run_id: str — use this in the fetch-output component to get Karamba data
+#   Output run_commentary: str (step-by-step log: run_id, Interpreting..., Generating..., Executing..., Done)
 
 import os
 import sys
@@ -16,7 +15,7 @@ SCRIPTS_DIR = os.path.join(REPO_ROOT, "03_python")
 if SCRIPTS_DIR not in sys.path:
     sys.path.insert(0, SCRIPTS_DIR)
 
-_env_path = os.path.join(REPO_ROOT, ".env")
+_env_path = os.path.join(REPO_ROOT, "00_setup", ".env")
 if os.path.isfile(_env_path):
     try:
         from dotenv import load_dotenv
@@ -39,13 +38,14 @@ from ttc_main import run as run_pipeline
 
 prompt_text = str(prompt).strip() if prompt else ""
 if not prompt_text:
-    a = "No prompt provided."
-    b = ""
-    c = {}
-    d = None
+    communication = "No prompt provided."
+    run_id = ""
+    run_commentary = ""
 else:
     out = run_pipeline(prompt_text, run_id=None)
-    a = out.get("communication", "")
-    b = out.get("run_id", "")
-    c = out.get("structure", {})
-    d = out.get("error")
+    communication = out.get("communication", "")
+    err = out.get("error")
+    if err:
+        communication = (communication.strip() + "\n\nError: " + str(err)) if communication else ("Error: " + str(err))
+    run_id = out.get("run_id", "")
+    run_commentary = out.get("run_commentary", "")

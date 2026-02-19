@@ -8,11 +8,16 @@ TTC Interpreter — Create full semantic outline of Truss from user prompt.
 
 import os
 import re
+import sys
 import json
 import urllib.request
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, Any, Tuple, Optional
+
+# Schema file we use (only this; no "schemas" or "structured_prompt")
+_STRUCTURE_OUTLINE_BASENAME = "structure_outline.json"
+_EMPTY_SCHEMAS_DIR = "empty_schemas"
 
 def _load_env_file(env_path: Path) -> None:
     """Load KEY=value lines from .env into os.environ."""
@@ -33,21 +38,63 @@ def _load_env_file(env_path: Path) -> None:
         print(f"Warning: Could not read .env: {e}")
 
 
-_repo = Path(__file__).resolve().parents[1]
-_env_path = _repo.parent / ".env"
+# Repo root for .env (00_setup/.env)
+def _repo_root() -> Path:
+    try:
+        p = Path(__file__).resolve()
+        if p.name.endswith(".py") and p.parent.name == "03_python":
+            return p.parents[1]
+    except Exception:
+        pass
+    return Path(os.getcwd()) if os.getcwd() else Path(sys.path[0]).parents[1] if len(sys.path) > 0 else Path(".").resolve()
+
+_env_path = _repo_root() / "00_setup" / ".env"
 if _env_path.exists():
     try:
         from dotenv import load_dotenv
-        load_dotenv(_env_path)
+        load_dotenv(str(_env_path))
     except ImportError:
         pass
     if not (os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("CLAUDE_API_KEY")):
         _load_env_file(_env_path)
 
 
+def _python_dir() -> Path:
+    """03_python directory. Resolve via __file__, sys.path, or cwd — never use 'schemas' or 'structured_prompt'."""
+    # 1. Same folder as this script (03_python)
+    try:
+        p = Path(__file__).resolve().parent
+        if (p / _EMPTY_SCHEMAS_DIR / _STRUCTURE_OUTLINE_BASENAME).exists():
+            return p
+    except Exception:
+        pass
+    # 2. sys.path[0] when GH adds 03_python to path
+    if sys.path:
+        sp = Path(sys.path[0]).resolve()
+        if (sp / _EMPTY_SCHEMAS_DIR / _STRUCTURE_OUTLINE_BASENAME).exists():
+            return sp
+    # 3. cwd or cwd/03_python
+    cwd = Path(os.getcwd()).resolve()
+    cand = cwd / "03_python" / _EMPTY_SCHEMAS_DIR / _STRUCTURE_OUTLINE_BASENAME
+    if cand.exists():
+        return cwd / "03_python"
+    if (cwd / _EMPTY_SCHEMAS_DIR / _STRUCTURE_OUTLINE_BASENAME).exists():
+        return cwd
+    # 4. Parents of __file__
+    try:
+        for parent in Path(__file__).resolve().parents:
+            candidate = parent / "03_python" / _EMPTY_SCHEMAS_DIR / _STRUCTURE_OUTLINE_BASENAME
+            if candidate.exists():
+                return parent / "03_python"
+    except Exception:
+        pass
+    # Fallback: assume 03_python is parent of this file
+    return Path(__file__).resolve().parent
+
+
 def _run_output_dir() -> Path:
     """Base directory for run output: 03_python/run_output/."""
-    d = Path(__file__).resolve().parent / "run_output"
+    d = _python_dir() / "run_output"
     d.mkdir(parents=True, exist_ok=True)
     return d
 
@@ -62,18 +109,33 @@ def get_latest_run_id() -> Optional[str]:
 
 
 def create_run_id() -> str:
-    """Create new run_id (timestamp), create folder in run_output, return id."""
-    run_id = datetime.now().strftime("%Y%m%d_%H%M%S")
-    folder = _run_output_dir() / run_id
+    """Create new run_id: short date + index (e.g. 260219_01_, 260219_02_)."""
+    date_prefix = datetime.now().strftime("%y%m%d")  # 260219
+    base = _run_output_dir()
+    base.mkdir(parents=True, exist_ok=True)
+    existing = [d.name for d in base.iterdir() if d.is_dir() and d.name.startswith(date_prefix + "_")]
+    indices = []
+    for name in existing:
+        try:
+            # name like 260219_01_ or 260219_02_
+            parts = name.split("_")
+            if len(parts) >= 2 and parts[1].isdigit():
+                indices.append(int(parts[1]))
+        except (ValueError, IndexError):
+            pass
+    next_idx = (max(indices) + 1) if indices else 1
+    run_id = f"{date_prefix}_{next_idx:02d}_"
+    folder = base / run_id
     folder.mkdir(parents=True, exist_ok=True)
     return run_id
 
 
 def _load_structure_outline() -> Dict[str, Any]:
-    """Fetch structure outline (form) from empty_schemas/structure_outline.json."""
-    path = Path(__file__).resolve().parent / "empty_schemas" / "structure_outline.json"
+    """Fetch structure outline from 03_python/empty_schemas/structure_outline.json only."""
+    base = _python_dir()
+    path = base / _EMPTY_SCHEMAS_DIR / _STRUCTURE_OUTLINE_BASENAME
     if not path.exists():
-        raise FileNotFoundError(f"Structure outline not found: {path}")
+        raise FileNotFoundError(f"Structure outline not found. Expected: {path} (use 03_python/empty_schemas/, not schemas/)")
     with open(path) as f:
         return json.load(f)
 
@@ -98,7 +160,7 @@ def parse_prompt_to_structured(
         API_KEY = os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("CLAUDE_API_KEY")
     if not API_KEY:
         raise ValueError(
-            "No API key. Add ANTHROPIC_API_KEY or CLAUDE_API_KEY to .env at repo root."
+            "No API key. Add ANTHROPIC_API_KEY or CLAUDE_API_KEY to .env in 00_setup."
         )
 
     if run_id is None:
