@@ -1,8 +1,8 @@
 """
 TTC Generator — Create gen_script.py (generated script for truss geometry).
 
-- Fetches boundary conditions and karamba items structure from config.
-- System prompt: boundary conditions + prewritten system prompt from config/ (system_prompt.txt, gen_script_output_function.txt).
+- Fetches boundary conditions and geometric output structure from config.
+- System prompt: boundary conditions + system_prompt.txt + gen_script_output_function.txt.
 - User prompt: semantic outline from Interpreter.
 - LLM returns script; scrape and save as gen_script.py in 03_python/run_output/[run_id]/.
 """
@@ -31,16 +31,16 @@ def _build_system_prompt(semantic_outline: Dict[str, Any]) -> str:
     system_txt = _dir / "config" / "system_prompt.txt"
     output_fn_txt = _dir / "config" / "gen_script_output_function.txt"
     boundary_path = _dir / "config" / "boundary_conditions.json"
-    karamba_path = _dir / "config" / "karamba_items_structure.json"
+    geometric_path = _dir / "config" / "geometric_output_structure.json"
 
     parts = []
     parts.append(_load_text(system_txt))
     parts.append("\n\nBOUNDARY CONDITIONS AND REQUIREMENTS:")
     if boundary_path.exists():
         parts.append(json.dumps(_load_json(boundary_path), indent=2))
-    parts.append("\n\nKARAMBA ITEMS STRUCTURE (what your output must provide):")
-    if karamba_path.exists():
-        parts.append(json.dumps(_load_json(karamba_path), indent=2))
+    parts.append("\n\nGEOMETRIC OUTPUT STRUCTURE (what your script must provide):")
+    if geometric_path.exists():
+        parts.append(json.dumps(_load_json(geometric_path), indent=2))
     parts.append("\n\nHARDCODED OUTPUT FUNCTION (your script MUST include and use this):")
     parts.append(_load_text(output_fn_txt))
     parts.append("\n\nSEMANTIC OUTLINE (input parameters for this run):")
@@ -86,12 +86,12 @@ def generate_geometry_script(
         raise ValueError("Set ANTHROPIC_API_KEY or CLAUDE_API_KEY in .env")
 
     system_prompt = _build_system_prompt(semantic_outline)
-    user_prompt = f"""Generate a Python script that computes the truss geometry and returns Karamba-ready output.
+    user_prompt = f"""Generate a Python script that computes the truss geometry and returns geometric output.
 
 Use the semantic outline below as input parameters. Your script must:
 1. Compute node positions and member connectivity (top chord, bottom chord, diagonals).
 2. Define support points and load points.
-3. Call get_karamba_output() and print its JSON at the end (if __name__ == "__main__": ... print(json.dumps(get_karamba_output()))).
+3. Call get_geometric_output() and print its JSON at the end (if __name__ == "__main__": ... print(json.dumps(get_geometric_output()))).
 
 SEMANTIC OUTLINE:
 {json.dumps(semantic_outline, indent=2)}

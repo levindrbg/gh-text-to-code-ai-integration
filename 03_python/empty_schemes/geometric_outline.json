@@ -1,0 +1,16 @@
+{
+  "description": "Karamba geometries: 2D truss in [x, z] plane. Units: m for coordinates, kN for forces. Supports are always pinned.",
+  "line_elements": [
+    { "start": [0, 0], "end": [1, 0] },
+    { "start": [1, 0], "end": [2, 0] },
+    { "start": [0, 0], "end": [1, 0.5] },
+    { "start": [1, 0.5], "end": [2, 0] }
+  ],
+  "support": [
+    [0, 0],
+    [2, 0]
+  ],
+  "loads": [
+    [1, 0.5, -1.0]
+  ]
+}

@@ -1,14 +1,14 @@
 # GH component 1: Send user prompt to interpreter and start the pipeline.
-# This file is in the repo (02_grasshopper) only for editing. Copy-paste its contents
-# into a GHPython component in TTC_Workflow_V1.gh. Path logic below must work when
-# run inside the component (not when run as this .py file); __file__ may be absent.
+# Copy-paste into a GHPython component in TTC_Workflow_V1.gh.
+# Runs only when you hit Run (Button); not on file reload. Use arm to enable/disable.
 #
 # GHPython (CPython 3, Rhino 8):
 #   Input  prompt: str — user prompt (e.g. "gable truss 12 m span, steel")
-#   Input  run:    wire Button — click to run
-#   Output communication: str — ONLY the chat completion from the interpreter (LLM message; no errors)
-#   Output run_id: str — use this in the fetch-output component to get Karamba data
-#   Output run_commentary: str — from main.py: step log + all error messages
+#   Input  run:    wire Button — click to run pipeline (only when armed)
+#   Input  arm:    bool — True = armed (can run), False = disarmed (no run)
+#   Output communication: str — ONLY the chat completion (LLM message; no errors)
+#   Output run_id: str — for fetch-output component
+#   Output run_commentary: str — step log + all error messages
 
 import os
 import sys
@@ -48,14 +48,16 @@ if os.path.isfile(_env_path):
                     if _k:
                         os.environ.setdefault(_k, _v)
 
-from ttc_main import run as run_pipeline
+from ttc_main import run as run_pipeline, load_latest_outputs
 
+# Only run pipeline when armed and run is triggered and prompt is non-empty
+armed = bool(arm) if arm is not None else False
+run_triggered = bool(run) if run is not None else False
 prompt_text = str(prompt).strip() if prompt else ""
-if not prompt_text:
-    communication = "No prompt provided."
-    run_id = ""
-    run_commentary = ""
-else:
+
+do_run = armed and run_triggered and bool(prompt_text)
+
+if do_run:
     try:
         out = run_pipeline(prompt_text, run_id=None)
         communication = out.get("communication", "")
@@ -65,3 +67,15 @@ else:
         communication = ""
         run_id = ""
         run_commentary = "Error: {}".format(e)
+else:
+    # Display latest run so results persist after button pulse
+    run_id, communication, run_commentary = load_latest_outputs()
+    if not run_id:
+        if not armed:
+            run_commentary = "Disarmed. Set arm = True and click Run to start pipeline."
+        elif not run_triggered:
+            run_commentary = "Armed. Click Run to start."
+        elif not prompt_text:
+            run_commentary = "No prompt provided. Enter prompt and click Run."
+        else:
+            run_commentary = ""

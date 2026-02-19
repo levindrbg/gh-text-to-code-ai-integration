@@ -1,10 +1,10 @@
 """
-TTC Executor — Fetch gen script from run_output, check validity, execute, return Karamba JSON.
+TTC Executor — Fetch gen script from run_output, validate, execute, return geometric output JSON.
 
-- Loads [run_id]_gen_script.py from 03_python/run_output.
+- Loads gen_script.py from 03_python/run_output/[run_id]/.
 - Validates script (syntax check).
-- Executes and captures output; parses JSON (from get_karamba_output() printed by script).
-- Returns dict with line_elements, support, loads, load_points for Karamba/GH.
+- Executes and captures output; parses JSON (from get_geometric_output() printed by script).
+- Returns dict with line_elements, support, loads for GH (2D [x,z], y=0).
 """
 
 import ast
@@ -34,8 +34,8 @@ def validate_script(script_str: str) -> None:
 def execute_script(script_str: str) -> Dict[str, Any]:
     """
     Execute the generated script and capture stdout.
-    Expects script to print a single JSON object (from get_karamba_output()).
-    Returns the parsed Karamba output dict.
+    Expects script to print a single JSON object (from get_geometric_output()).
+    Returns the parsed geometric output dict.
     """
     stdout_capture = io.StringIO()
     old_stdout = sys.stdout
@@ -58,10 +58,10 @@ def execute_script(script_str: str) -> Dict[str, Any]:
 
 def run(run_id: str) -> Dict[str, Any]:
     """
-    Fetch gen script for run_id, validate, execute, return Karamba output.
+    Fetch gen script for run_id, validate, execute, return geometric output.
 
     Returns:
-        Dict with keys: line_elements, support, loads, load_points (and any extra from script).
+        Dict with keys: line_elements, support, loads (and any extra from script).
     """
     script_str = load_script(run_id)
     validate_script(script_str)
