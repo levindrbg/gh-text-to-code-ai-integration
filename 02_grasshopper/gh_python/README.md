@@ -5,20 +5,23 @@ These files live in the repo only for editing; they do not run from disk. Path l
 
 Pipeline code lives in **03_python/**; these components add the repo path, load `.env` from **00_setup**, and call the pipeline.
 
+**Components form a linear chain.** Connect them in series by wiring **run_id** from each component’s output to the next component’s **run_id** input.
+
 ---
 
 | File | Role | GH inputs | GH outputs |
 |------|------|-----------|------------|
-| **ttc_gh_send_prompt.py** | Send prompt and run full pipeline | `prompt` (str), run (e.g. Button) | `communication`, `run_id`, `run_commentary` |
-| **ttc_gh_fetch_output.py** | Fetch Karamba output for a run | `run_id` (str), run (e.g. Button) | `a`=status, `b`=Line_Elements, `c`=Support, `d`=Loads, `e`=Load_Points, `f`=error |
+| **ttc_gh_run_pipeline.py** | Run pipeline (creates run_id) | `prompt`, `CroSec` (optional), `run` (Button), `arm` | `run_id` |
+| **ttc_gh_fetch_interpreter_returns.py** | Fetch interpreter outputs for run_id | `run_id` | `run_id` (pass-through), `communication`, `run_commentary` |
+| **ttc_gh_fetch_output.py** | Fetch geometric output for run_id | `run_id` | `run_id` (pass-through), `status`, `Line_Elements`, `Support`, `Loads`, `Load_Points` |
 
 ---
 
 **Usage**
 
 1. Open **TTC_Workflow_V1.gh** (in `02_grasshopper/`).
-2. Add two GHPython components.
-3. Copy the contents of **ttc_gh_send_prompt.py** into the first component; copy **ttc_gh_fetch_output.py** into the second.
-4. Wire the **run_id** output of the send-prompt component to the **run_id** input of the fetch-output component when you need Karamba geometry for a run.
+2. Add three GHPython components (or two if you skip interpreter returns).
+3. Paste **ttc_gh_run_pipeline.py** into the first, **ttc_gh_fetch_interpreter_returns.py** into the second, **ttc_gh_fetch_output.py** into the third.
+4. Wire in series: **run_id** out → **run_id** in for each step. Connect **communication** and **run_commentary** to Panels as needed; use **Line_Elements**, **Support**, **Loads**, **Load_Points** for geometry.
 
 Repo root and **03_python** are resolved from the component’s runtime (e.g. `os.getcwd()`); if Rhino’s cwd is the repo root or `02_grasshopper`, paths should work. Set `REPO_ROOT` in the scripts if you need a fixed path.

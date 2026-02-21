@@ -1,7 +1,7 @@
 """
 TTC Interpreter — Create full semantic outline of Truss from user prompt.
 
-- Fetches semantic outline from config/semantic_outline.json and system prompt from config/system_prompt_interpreter.txt.
+- Fetches semantic outline schema from config/semantic_outline.json and system prompt from config/interpreter_system_prompt.md.
 - Calls LLM to fill the form from the user prompt.
 - Saves semantic outline and communication in 03_python/run_output/[run_id]/.
 """
@@ -153,7 +153,7 @@ def parse_prompt_to_structured(
     """
     Create full semantic outline of Truss from user prompt.
 
-    - Fetches semantic outline from config/semantic_outline.json.
+    - Fetches semantic outline schema from config/semantic_outline.json and system prompt from config/interpreter_system_prompt.md.
     - Asks LLM to fill the form; infers where logical, asks for clarification otherwise.
     - Saves in 03_python/run_output/[run_id]/: semantic_outline.json, communication.txt.
 
@@ -177,10 +177,12 @@ def parse_prompt_to_structured(
     properties = schema.get("properties", {})
     schema_str = json.dumps({"required": required, "properties": properties}, indent=2)
 
-    system_prompt_path = _python_dir() / _CONFIG_DIR / "system_prompt_interpreter.txt"
+    system_prompt_path = _python_dir() / _CONFIG_DIR / "interpreter_system_prompt.md"
     if system_prompt_path.exists():
         with open(system_prompt_path, encoding="utf-8") as f:
-            system_prompt = f.read().strip().replace("{JSON_STRUCTURE}", schema_str)
+            system_prompt = f.read().strip()
+        system_prompt += "\n\n---\n\nJSON structure to fill (required and properties):\n"
+        system_prompt += schema_str
     else:
         raise FileNotFoundError(f"Interpreter system prompt not found: {system_prompt_path}")
 
@@ -244,11 +246,14 @@ Fill the JSON structure. If something is missing or unclear, say so in COMMUNICA
     if missing:
         communication = f"Missing required fields: {missing}. " + communication
 
+    # One continuous line in file so GH and other readers get a single string
+    communication_one_line = " ".join(communication.split())
+
     out_dir = _run_output_dir() / run_id
     out_dir.mkdir(parents=True, exist_ok=True)
     with open(out_dir / "semantic_outline.json", "w") as f:
         json.dump(semantic_outline, f, indent=2)
-    with open(out_dir / "communication.txt", "w") as f:
-        f.write(communication)
+    with open(out_dir / "communication.txt", "w", encoding="utf-8") as f:
+        f.write(communication_one_line)
 
     return semantic_outline, communication, run_id

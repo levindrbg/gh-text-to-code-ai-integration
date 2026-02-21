@@ -1,8 +1,8 @@
 """
 TTC Generator — Create gen_script.py (generated script for truss geometry).
 
-- Fetches system_prompt_generator.txt and geometric_outline.json from config.
-- User prompt: semantic outline from Interpreter.
+- Fetches generator_system_prompt.md, system_outline.json, and geometric_outline.json from config.
+- User prompt: semantic outline from Interpreter. Cross-section catalogue is passed at runtime.
 - LLM returns script; scrape and save as gen_script.py in 03_python/run_output/[run_id]/.
 """
 
@@ -10,36 +10,49 @@ import os
 import json
 import urllib.request
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict, Any, List, Optional
 
 _dir = Path(__file__).resolve().parent
 
 
-def _load_text(path: Path) -> str:
-    with open(path) as f:
+def _load_text(path: Path, encoding: str = "utf-8") -> str:
+    with open(path, encoding=encoding) as f:
         return f.read().strip()
 
 
 def _load_json(path: Path) -> Dict[str, Any]:
-    with open(path) as f:
+    with open(path, encoding="utf-8") as f:
         return json.load(f)
 
 
-def _build_system_prompt(semantic_outline: Dict[str, Any]) -> str:
-    """Build system prompt from config: system_prompt_generator.txt, geometric_outline.json, result_function.py, and semantic outline."""
-    system_txt = _dir / "config" / "system_prompt_generator.txt"
+def _build_system_prompt(
+    semantic_outline: Dict[str, Any],
+    cross_section_catalog: List[str],
+) -> str:
+    """Build system prompt from config: generator_system_prompt.md, system_outline.json, geometric_outline.json, catalogue, and semantic outline."""
+    system_md = _dir / "config" / "generator_system_prompt.md"
+    system_outline_path = _dir / "config" / "system_outline.json"
     geometric_path = _dir / "config" / "geometric_outline.json"
-    result_fn_path = _dir / "config" / "result_function.py"
 
     parts = []
-    parts.append(_load_text(system_txt))
-    parts.append("\n\nGEOMETRIC OUTPUT SCHEMA (output must match this structure):")
+    if system_md.exists():
+        parts.append(_load_text(system_md))
+    else:
+        raise FileNotFoundError(f"Generator system prompt not found: {system_md}")
+
+    if system_outline_path.exists():
+        parts.append("\n\n---\n\nSYSTEM CONFIG (config.json / system_outline.json):")
+        parts.append(json.dumps(_load_json(system_outline_path), indent=2))
+
+    parts.append("\n\n---\n\nGEOMETRIC OUTPUT SCHEMA (output must match this structure):")
     if geometric_path.exists():
         parts.append(json.dumps(_load_json(geometric_path), indent=2))
-    parts.append("\n\nREFERENCE: include this result function in your script and use it to build the output. Your script must define get_geometric_output() and call it; at the end print its JSON (if __name__ == \"__main__\": print(json.dumps(get_geometric_output()))).")
-    if result_fn_path.exists():
-        parts.append(_load_text(result_fn_path))
-    parts.append("\n\nSEMANTIC OUTLINE (input parameters for this run):")
+
+    if cross_section_catalog:
+        parts.append("\n\n---\n\nCROSS-SECTION CATALOGUE (assign one of these exact profile names to each member; required for Karamba workflow):")
+        parts.append(json.dumps(cross_section_catalog, indent=2))
+
+    parts.append("\n\n---\n\nSEMANTIC OUTLINE (input parameters for this run):")
     parts.append(json.dumps(semantic_outline, indent=2))
     return "\n".join(parts)
 
@@ -71,17 +84,19 @@ def _scrape_script_from_llm_response(response_text: str) -> str:
 def generate_geometry_script(
     semantic_outline: Dict[str, Any],
     run_id: str,
+    cross_section_catalog: Optional[List[str]] = None,
 ) -> str:
     """
-    Generate gen script via LLM. User prompt = semantic outline; system = boundary conditions + system prompt file + output function.
-    Saves script as [run_id]_gen_script.py in 03_python/run_output.
+    Generate gen script via LLM. User prompt = semantic outline; system = generator_system_prompt.md + system_outline.json + geometric_outline.json + cross-section catalogue + semantic outline.
+    Saves script as gen_script.py in 03_python/run_output/[run_id]/.
     Returns the script string.
     """
     API_KEY = os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("CLAUDE_API_KEY")
     if not API_KEY:
         raise ValueError("Set ANTHROPIC_API_KEY or CLAUDE_API_KEY in .env")
 
-    system_prompt = _build_system_prompt(semantic_outline)
+    catalog = cross_section_catalog if cross_section_catalog is not None else []
+    system_prompt = _build_system_prompt(semantic_outline, catalog)
     user_prompt = f"""Generate a Python script that computes the truss geometry and returns geometric output.
 
 Use the semantic outline below as input parameters. Your script must:

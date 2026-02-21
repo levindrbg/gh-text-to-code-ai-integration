@@ -10,6 +10,7 @@ All filled-out data is saved under run_output/[run_id]/.
 """
 
 import json
+import os
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -21,17 +22,21 @@ _dir = Path(__file__).resolve().parent
 
 
 def _run_output_dir() -> Path:
+    """Run output base dir. Prefer TTC_03_PYTHON when set (e.g. by GH) so read path matches interpreter write path."""
+    env = os.environ.get("TTC_03_PYTHON")
+    if env:
+        return Path(env).resolve() / "run_output"
     return _dir / "run_output"
 
 
-def load_latest_outputs() -> tuple:
+def load_run_outputs(run_id: str) -> tuple:
     """
-    Load communication, run_id, run_commentary from the latest run in run_output.
-    Returns (run_id, communication, run_commentary). Empty strings if no runs exist.
+    Load communication and run_commentary for a given run_id from run_output/[run_id]/.
+    Returns (communication, run_commentary). Empty strings if run_id is empty or files missing.
     """
-    rid = get_latest_run_id()
+    rid = (run_id or "").strip()
     if not rid:
-        return ("", "", "")
+        return ("", "")
     run_dir = _run_output_dir() / rid
     comm = ""
     if (run_dir / "communication.txt").exists():
@@ -49,12 +54,25 @@ def load_latest_outputs() -> tuple:
             pass
     if not commentary.strip() and rid:
         commentary = "Run {} (commentary not saved for this run).".format(rid)
+    return (comm, commentary)
+
+
+def load_latest_outputs() -> tuple:
+    """
+    Load communication, run_id, run_commentary from the latest run in run_output.
+    Returns (run_id, communication, run_commentary). Empty strings if no runs exist.
+    """
+    rid = get_latest_run_id()
+    if not rid:
+        return ("", "", "")
+    comm, commentary = load_run_outputs(rid)
     return (rid, comm, commentary)
 
 
 def run(
     prompt: str,
     run_id: Optional[str] = None,
+    cross_section_catalog: Optional[list] = None,
 ) -> Dict[str, Any]:
     """
     Run the full pipeline: interpret → generate → execute.
@@ -64,6 +82,8 @@ def run(
     Args:
         prompt: User natural-language prompt (e.g. "gable truss 12 m span, steel").
         run_id: Optional. If None, a new run_id is created here and used for the whole process.
+        cross_section_catalog: Optional list of profile name strings (e.g. ["HEA100", "HEA120", ...])
+            for the generator to assign to members. Passed from GH "CroSec" input when provided.
 
     Returns:
         Dict with: communication, run_id, structure, script_str, geometric_output, error, run_commentary.
@@ -94,7 +114,8 @@ def run(
 
         # 2. Generator: gen_script.py → run_output/[run_id]/
         log.append("Generating gen_script.py...")
-        script_str = generate_geometry_script(semantic_outline, run_id=rid)
+        catalog = cross_section_catalog if cross_section_catalog is not None else []
+        script_str = generate_geometry_script(semantic_outline, run_id=rid, cross_section_catalog=catalog)
         result["script_str"] = script_str
         log.append("Saved run_output/{}/gen_script.py".format(rid))
 
