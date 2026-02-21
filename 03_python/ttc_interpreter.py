@@ -225,13 +225,20 @@ Fill the JSON structure. If something is missing or unclear, say so in COMMUNICA
     structure_match = re.search(r"<STRUCTURE>\s*([\s\S]*?)\s*</STRUCTURE>", response_text, re.IGNORECASE)
     comm_match = re.search(r"<COMMUNICATION>\s*([\s\S]*?)\s*</COMMUNICATION>", response_text, re.IGNORECASE)
 
-    if not structure_match:
-        raise ValueError("No <STRUCTURE> block in Claude response")
-    if not comm_match:
-        raise ValueError("No <COMMUNICATION> block in Claude response")
-
-    structure_raw = structure_match.group(1).strip()
-    communication = comm_match.group(1).strip()
+    if structure_match:
+        structure_raw = structure_match.group(1).strip()
+        communication = comm_match.group(1).strip() if comm_match else ""
+    else:
+        # Fallback: prompt says "return only the filled JSON" — try to find a JSON object in the response
+        structure_raw = response_text.strip()
+        if structure_raw.startswith("```"):
+            structure_raw = re.sub(r"^```\w*\n?", "", structure_raw)
+            structure_raw = re.sub(r"\n?```\s*$", "", structure_raw)
+        # Find first {...} that looks like JSON (greedy match from first { to last })
+        obj_match = re.search(r"\{[\s\S]*\}", structure_raw)
+        if obj_match:
+            structure_raw = obj_match.group(0)
+        communication = ""
 
     if structure_raw.startswith("```"):
         structure_raw = re.sub(r"^```\w*\n?", "", structure_raw)
@@ -240,7 +247,10 @@ Fill the JSON structure. If something is missing or unclear, say so in COMMUNICA
     try:
         semantic_outline = json.loads(structure_raw)
     except json.JSONDecodeError as e:
-        raise ValueError(f"Invalid JSON in STRUCTURE block: {e}\nContent:\n{structure_raw}")
+        snippet = (response_text[:500] + "...") if len(response_text) > 500 else response_text
+        raise ValueError(
+            f"Invalid JSON from Interpreter: {e}\nContent used:\n{structure_raw[:800]}...\n\nFull response snippet:\n{snippet}"
+        )
 
     missing = [f for f in required if f not in semantic_outline]
     if missing:
@@ -251,7 +261,7 @@ Fill the JSON structure. If something is missing or unclear, say so in COMMUNICA
 
     out_dir = _run_output_dir() / run_id
     out_dir.mkdir(parents=True, exist_ok=True)
-    with open(out_dir / "semantic_outline.json", "w") as f:
+    with open(out_dir / "semantic_outline.json", "w", encoding="utf-8") as f:
         json.dump(semantic_outline, f, indent=2)
     with open(out_dir / "communication.txt", "w", encoding="utf-8") as f:
         f.write(communication_one_line)

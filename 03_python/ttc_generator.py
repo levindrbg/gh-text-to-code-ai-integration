@@ -144,7 +144,7 @@ Output ONLY executable Python 3 code. No markdown fences, no explanation."""
     run_dir = _dir / "run_output" / run_id
     run_dir.mkdir(parents=True, exist_ok=True)
     script_path = run_dir / "gen_script.py"
-    with open(script_path, "w") as f:
+    with open(script_path, "w", encoding="utf-8") as f:
         f.write(script_str)
 
     return script_str
@@ -155,5 +155,5 @@ def load_generated_script(run_id: str) -> str:
     path = _dir / "run_output" / run_id / "gen_script.py"
     if not path.exists():
         raise FileNotFoundError(f"Generated script not found: {path}")
-    with open(path) as f:
+    with open(path, encoding="utf-8") as f:
         return f.read()

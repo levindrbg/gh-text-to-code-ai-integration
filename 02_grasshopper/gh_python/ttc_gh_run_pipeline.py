@@ -7,7 +7,7 @@
 #   Input  CroSec: str or list — cross-section catalogue. Either a single string with lines like
 #           family:'HEA' name:'HEA100' country:'EU' material:'Steel' applies to elements:''; 
 #           or a list of profile name strings (e.g. ["HEA100","HEA120",...]). Used by Generator to assign one profile per member.
-#   Input  run:    wire Button — click to run pipeline (only when armed)
+#   Input  run:    wire Button — click to run pipeline (only when armed). Runs once per pulse (rising edge).
 #   Input  arm:    bool — True = armed, False = disarmed
 #   Output run_id: str — pass to next component in chain
 
@@ -15,6 +15,26 @@ import os
 import re
 import sys
 from pathlib import Path
+
+# State file for rising-edge detection: run pipeline only when run goes False → True (one API run per click).
+_TTC_RUN_STATE_FILE = None  # set after REPO_ROOT is defined
+
+
+def _run_trigger_rising_edge(run_val):
+    """Return True only when run_val is True this time and was False last time (single run per button click)."""
+    global _TTC_RUN_STATE_FILE
+    if _TTC_RUN_STATE_FILE is None:
+        return bool(run_val)  # fallback if state file not set
+    try:
+        prev = _TTC_RUN_STATE_FILE.read_text().strip().lower() == "true"
+    except Exception:
+        prev = False
+    is_run = bool(run_val)
+    try:
+        _TTC_RUN_STATE_FILE.write_text("True" if is_run else "False", encoding="utf-8")
+    except Exception:
+        pass
+    return is_run and not prev
 
 
 def _parse_crosec_catalog(crosec_input):
@@ -62,6 +82,9 @@ if not os.path.isdir(os.path.join(REPO_ROOT, "03_python")):
     elif _cwd.name == "02_grasshopper" and (_cwd.parent / "03_python").is_dir():
         REPO_ROOT = str(_cwd.parent)
 
+# Rising-edge state file (run only once per button click)
+_TTC_RUN_STATE_FILE = Path(REPO_ROOT) / ".ttc_gh_run_prev"
+
 SCRIPTS_DIR = os.path.join(REPO_ROOT, "03_python")
 if SCRIPTS_DIR not in sys.path:
     sys.path.insert(0, SCRIPTS_DIR)
@@ -89,7 +112,8 @@ if os.path.isfile(_env_path):
 from ttc_main import run as run_pipeline, get_latest_run_id
 
 armed = bool(arm) if arm is not None else False
-run_triggered = bool(run) if run is not None else False
+run_val = bool(run) if run is not None else False
+run_triggered = _run_trigger_rising_edge(run_val)  # True only on rising edge (one run per click)
 prompt_text = str(prompt).strip() if prompt else ""
 try:
     crosec_catalog = _parse_crosec_catalog(CroSec) if CroSec is not None else []

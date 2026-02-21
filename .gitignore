@@ -22,6 +22,9 @@ __pycache__/
 .coverage
 htmlcov/
 
+# GH run-pipeline button state (rising-edge detection)
+.ttc_gh_run_prev
+
 # IDE / OS
 .idea/
 .vscode/

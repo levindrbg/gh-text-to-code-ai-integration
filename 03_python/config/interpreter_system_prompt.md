@@ -70,7 +70,11 @@ Extract `num_bays` from the prompt if stated. If not stated, omit it — the Gen
 
 ## Output Format
 
-Return a single valid JSON object that conforms to `semantic_outline.json`. Nothing before it, nothing after it.
+**Your response must always be valid JSON only.**
+
+- Return a single valid JSON object that conforms to the `semantic_outline.json` schema (required and properties given below).
+- Output **nothing else**: do not wrap the JSON in markdown code blocks; no explanatory text before or after; no XML or other tags.
+- The response must be parseable as JSON by a strict parser. Valid JSON only.
 
 ### Example
 

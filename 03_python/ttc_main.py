@@ -125,23 +125,26 @@ def run(
         result["geometric_output"] = geometric
         run_dir = _run_output_dir() / rid
         run_dir.mkdir(parents=True, exist_ok=True)
-        with open(run_dir / "geometric_output.json", "w") as f:
+        with open(run_dir / "geometric_output.json", "w", encoding="utf-8") as f:
             json.dump(geometric, f, indent=2)
         log.append("Saved run_output/{}/geometric_output.json".format(rid))
         log.append("Done.")
 
     except Exception as e:
         result["error"] = str(e)
-        result["communication"] = ""  # never put errors in communication; only in run_commentary
+        result["communication"] = "Pipeline error: " + str(e)
         log.append("Error: {}".format(e))
 
     result["run_commentary"] = "\n".join(log) if log else "[run_id] {}".format(result.get("run_id", ""))
-    # Persist run_commentary so GH can show "latest run" after button pulse
+    # Persist run_commentary and (on error) communication so GH Panels show something
     run_dir = _run_output_dir() / result["run_id"]
     if result["run_id"]:
         run_dir.mkdir(parents=True, exist_ok=True)
         with open(run_dir / "run_commentary.txt", "w", encoding="utf-8") as f:
             f.write(result["run_commentary"])
+        if result["error"]:
+            with open(run_dir / "communication.txt", "w", encoding="utf-8") as f:
+                f.write(result["communication"])
     return result
 
 

@@ -95,9 +95,9 @@ After each iteration verify constraints from `config.json → optimization → c
 - Slenderness ≤ `max_slenderness_ratio` for all compression members
 - Remove members with area below `min_member_area_mm2`
 
-### 7. Export the result
+### 7. Export the result (JSON output)
 
-Output a JSON string matching the Karamba `geometric_outline` contract from `config.json → output → schema` exactly. Each member in `line_elements` must include a `cross_section` field containing the assigned profile name string from the catalogue:
+The script must produce its final result as **JSON only**. It must build a single JSON object matching the Karamba `geometric_outline` contract from `config.json → output → schema` exactly, then print it (e.g. `print(json.dumps(get_geometric_output()))`). Each member in `line_elements` must include a `cross_section` field containing the assigned profile name string from the catalogue. The printed output that will be captured is this JSON — no other format.
 
 ```json
 {
@@ -142,4 +142,7 @@ Loads in the output are the combined ULS point loads at top chord node positions
 
 ## Output Format
 
-Return a single, complete, executable Python script. Nothing before it, nothing after it.
+**Your response must be a single, complete, executable Python script only.**
+
+- Return nothing but the Python script: no markdown code fences, no explanation before or after, no JSON or other text.
+- The script you write must output **JSON** as its final result (the geometric outline from section 7). The downstream pipeline captures that JSON; the script itself is the only valid response format from you.
