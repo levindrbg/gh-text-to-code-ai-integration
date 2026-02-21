@@ -1,8 +1,7 @@
 """
 TTC Generator — Create gen_script.py (generated script for truss geometry).
 
-- Fetches boundary conditions and geometric output structure from config.
-- System prompt: boundary conditions + system_prompt.txt + gen_script_output_function.txt.
+- Fetches system_prompt_generator.txt and geometric_outline.json from config.
 - User prompt: semantic outline from Interpreter.
 - LLM returns script; scrape and save as gen_script.py in 03_python/run_output/[run_id]/.
 """
@@ -11,7 +10,7 @@ import os
 import json
 import urllib.request
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 
 _dir = Path(__file__).resolve().parent
 
@@ -27,22 +26,19 @@ def _load_json(path: Path) -> Dict[str, Any]:
 
 
 def _build_system_prompt(semantic_outline: Dict[str, Any]) -> str:
-    """Build system prompt from config files + semantic outline (for context)."""
-    system_txt = _dir / "config" / "system_prompt.txt"
-    output_fn_txt = _dir / "config" / "gen_script_output_function.txt"
-    boundary_path = _dir / "config" / "boundary_conditions.json"
-    geometric_path = _dir / "config" / "geometric_output_structure.json"
+    """Build system prompt from config: system_prompt_generator.txt, geometric_outline.json, result_function.py, and semantic outline."""
+    system_txt = _dir / "config" / "system_prompt_generator.txt"
+    geometric_path = _dir / "config" / "geometric_outline.json"
+    result_fn_path = _dir / "config" / "result_function.py"
 
     parts = []
     parts.append(_load_text(system_txt))
-    parts.append("\n\nBOUNDARY CONDITIONS AND REQUIREMENTS:")
-    if boundary_path.exists():
-        parts.append(json.dumps(_load_json(boundary_path), indent=2))
-    parts.append("\n\nGEOMETRIC OUTPUT STRUCTURE (what your script must provide):")
+    parts.append("\n\nGEOMETRIC OUTPUT SCHEMA (output must match this structure):")
     if geometric_path.exists():
         parts.append(json.dumps(_load_json(geometric_path), indent=2))
-    parts.append("\n\nHARDCODED OUTPUT FUNCTION (your script MUST include and use this):")
-    parts.append(_load_text(output_fn_txt))
+    parts.append("\n\nREFERENCE: include this result function in your script and use it to build the output. Your script must define get_geometric_output() and call it; at the end print its JSON (if __name__ == \"__main__\": print(json.dumps(get_geometric_output()))).")
+    if result_fn_path.exists():
+        parts.append(_load_text(result_fn_path))
     parts.append("\n\nSEMANTIC OUTLINE (input parameters for this run):")
     parts.append(json.dumps(semantic_outline, indent=2))
     return "\n".join(parts)

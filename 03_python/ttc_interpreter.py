@@ -1,7 +1,7 @@
 """
 TTC Interpreter — Create full semantic outline of Truss from user prompt.
 
-- Fetches structure outline (form) from empty_schemes/structure_outline.json.
+- Fetches semantic outline from config/semantic_outline.json and system prompt from config/system_prompt_interpreter.txt.
 - Calls LLM to fill the form from the user prompt.
 - Saves semantic outline and communication in 03_python/run_output/[run_id]/.
 """
@@ -15,12 +15,8 @@ from pathlib import Path
 from datetime import datetime
 from typing import Dict, Any, Tuple, Optional
 
-# Structure outline: folder is "empty_schemes" (not "empty_schemas" or "schemas")
-_STRUCTURE_OUTLINE_BASENAME = "structure_outline.json"
-_EMPTY_SCHEMAS_DIR = "empty_schemes"
-
-# Hardcoded path so component runtime always finds the file (edit if your repo is elsewhere)
-_STRUCTURE_OUTLINE_HARDCODED = Path(r"C:\Users\levin\Documents\GitHub\gh-text-to-code-ai-integration\03_python\empty_schemes\structure_outline.json")
+_CONFIG_DIR = "config"
+_SEMANTIC_OUTLINE_BASENAME = "semantic_outline.json"
 
 def _load_env_file(env_path: Path) -> None:
     """Load KEY=value lines from .env into os.environ."""
@@ -63,50 +59,39 @@ if _env_path.exists():
 
 
 def _python_dir() -> Path:
-    """03_python directory. Prefer hardcoded path, then TTC_03_PYTHON, __file__, sys.path, cwd."""
-    # 0. Hardcoded full path (reliable when pasted into GH component)
-    if _STRUCTURE_OUTLINE_HARDCODED.exists():
-        return _STRUCTURE_OUTLINE_HARDCODED.parent.parent  # 03_python
-    # 1. Explicit path set by GH script
+    """03_python directory. Resolve via config/semantic_outline.json."""
+    config_file = _config_semantic_outline_path()
+    if config_file and config_file.exists():
+        return config_file.parent.parent  # config -> 03_python
     env_base = os.environ.get("TTC_03_PYTHON")
-    if env_base:
-        p = Path(env_base).resolve()
-        schema_file = p / _EMPTY_SCHEMAS_DIR / _STRUCTURE_OUTLINE_BASENAME
-        if schema_file.exists():
-            return p
-    # 1. Same folder as this script (03_python)
-    try:
-        p = Path(__file__).resolve().parent
-        schema_file = p / _EMPTY_SCHEMAS_DIR / _STRUCTURE_OUTLINE_BASENAME
-        if schema_file.exists():
-            return p
-    except Exception:
-        pass
-    # 2. sys.path[0] when GH adds 03_python to path
-    if sys.path:
-        sp = Path(sys.path[0]).resolve()
-        schema_file = sp / _EMPTY_SCHEMAS_DIR / _STRUCTURE_OUTLINE_BASENAME
-        if schema_file.exists():
-            return sp
-    # 3. cwd or cwd/03_python
-    cwd = Path(os.getcwd()).resolve()
-    cand = cwd / "03_python" / _EMPTY_SCHEMAS_DIR / _STRUCTURE_OUTLINE_BASENAME
-    if cand.exists():
-        return cwd / "03_python"
-    if (cwd / _EMPTY_SCHEMAS_DIR / _STRUCTURE_OUTLINE_BASENAME).exists():
-        return cwd
-    # 4. Parents of __file__
-    try:
-        for parent in Path(__file__).resolve().parents:
-            candidate = parent / "03_python" / _EMPTY_SCHEMAS_DIR / _STRUCTURE_OUTLINE_BASENAME
-            if candidate.exists():
-                return parent / "03_python"
-    except Exception:
-        pass
-    # Fallback: use TTC_03_PYTHON even if file check failed (path might be correct, file might be missing)
     if env_base:
         return Path(env_base).resolve()
     return Path(__file__).resolve().parent
+
+
+def _config_semantic_outline_path() -> Optional[Path]:
+    """Path to config/semantic_outline.json; None if not found."""
+    candidates = []
+    try:
+        candidates.append(Path(__file__).resolve().parent / _CONFIG_DIR / _SEMANTIC_OUTLINE_BASENAME)
+    except Exception:
+        pass
+    if sys.path:
+        candidates.append(Path(sys.path[0]).resolve() / _CONFIG_DIR / _SEMANTIC_OUTLINE_BASENAME)
+    cwd = Path(os.getcwd()).resolve()
+    candidates.extend([
+        cwd / "03_python" / _CONFIG_DIR / _SEMANTIC_OUTLINE_BASENAME,
+        cwd / _CONFIG_DIR / _SEMANTIC_OUTLINE_BASENAME,
+    ])
+    try:
+        for parent in Path(__file__).resolve().parents:
+            candidates.append(parent / "03_python" / _CONFIG_DIR / _SEMANTIC_OUTLINE_BASENAME)
+    except Exception:
+        pass
+    for p in candidates:
+        if p.exists():
+            return p
+    return None
 
 
 def _run_output_dir() -> Path:
@@ -147,23 +132,18 @@ def create_run_id() -> str:
     return run_id
 
 
-def _load_structure_outline() -> Dict[str, Any]:
-    """Fetch structure outline; prefer hardcoded path (03_python/empty_schemes/), then _python_dir()."""
-    try:
-        with open(_STRUCTURE_OUTLINE_HARDCODED) as f:
-            return json.load(f)
-    except FileNotFoundError:
-        pass
-    base = _python_dir()
-    path = base / _EMPTY_SCHEMAS_DIR / _STRUCTURE_OUTLINE_BASENAME
-    try:
-        with open(path) as f:
-            return json.load(f)
-    except FileNotFoundError:
+def _load_semantic_outline() -> Dict[str, Any]:
+    """Load semantic outline (form schema) from config/semantic_outline.json."""
+    path = _config_semantic_outline_path()
+    if not path or not path.exists():
+        base = _python_dir()
+        path = base / _CONFIG_DIR / _SEMANTIC_OUTLINE_BASENAME
+    if not path.exists():
         raise FileNotFoundError(
-            f"Structure outline not found. Tried hardcoded: {_STRUCTURE_OUTLINE_HARDCODED} and {path}. "
-            "Folder must be 03_python/empty_schemes/. Restart Rhino after editing the script so it loads fresh code."
+            f"Semantic outline not found. Expected config/semantic_outline.json under 03_python. Tried: {path}"
         )
+    with open(path) as f:
+        return json.load(f)
 
 
 def parse_prompt_to_structured(
@@ -173,7 +153,7 @@ def parse_prompt_to_structured(
     """
     Create full semantic outline of Truss from user prompt.
 
-    - Fetches structure outline from empty_schemes/structure_outline.json.
+    - Fetches semantic outline from config/semantic_outline.json.
     - Asks LLM to fill the form; infers where logical, asks for clarification otherwise.
     - Saves in 03_python/run_output/[run_id]/: semantic_outline.json, communication.txt.
 
@@ -192,31 +172,17 @@ def parse_prompt_to_structured(
     if run_id is None:
         run_id = create_run_id()
 
-    schema = _load_structure_outline()
+    schema = _load_semantic_outline()
     required = schema.get("required", [])
     properties = schema.get("properties", {})
+    schema_str = json.dumps({"required": required, "properties": properties}, indent=2)
 
-    system_prompt = f"""You are a structural engineering assistant. The user describes a truss/structure. Fill a structured JSON from their description.
-
-JSON STRUCTURE TO FILL (conform to this schema):
-{json.dumps({"required": required, "properties": properties}, indent=2)}
-
-RULES:
-1. Fill every field you can infer. Use sensible defaults where appropriate (e.g. loads: snow 1.0, wind 0.5, dead 0.5 kN/m² if not specified).
-2. If required fields are missing or ambiguous, list them in COMMUNICATION and ask for clarification.
-3. If you filled the structure satisfactorily, write a brief summary in COMMUNICATION.
-
-OUTPUT FORMAT — respond with exactly two blocks in this order:
-
-<STRUCTURE>
-{{ ... valid JSON only, no markdown ... }}
-</STRUCTURE>
-
-<COMMUNICATION>
-Questions for the user or brief summary. Plain text only.
-</COMMUNICATION>
-
-Return only these two blocks. No other text before or after."""
+    system_prompt_path = _python_dir() / _CONFIG_DIR / "system_prompt_interpreter.txt"
+    if system_prompt_path.exists():
+        with open(system_prompt_path, encoding="utf-8") as f:
+            system_prompt = f.read().strip().replace("{JSON_STRUCTURE}", schema_str)
+    else:
+        raise FileNotFoundError(f"Interpreter system prompt not found: {system_prompt_path}")
 
     user_message = f"""User prompt about the structure they want:
 

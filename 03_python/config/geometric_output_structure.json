@@ -1,6 +1,0 @@
-{
-  "description": "2D truss in [x, z] plane. Units: m for coordinates, kN for forces. Supports pinned. y=0 in 3D.",
-  "line_elements": "List of members: each {\"start\": [x, z], \"end\": [x, z]}.",
-  "support": "List of support points: each [x, z].",
-  "loads": "List of loads: each [x, z, Fz] — application point (x,z) and vertical force Fz in kN."
-}
