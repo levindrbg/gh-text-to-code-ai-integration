@@ -42,8 +42,8 @@
     },
 
     "geometry_truss": {
-      "description": "Individual truss geometry and typology. Extracted from user prompt.",
-      "required": ["span_m", "height_m", "typology"],
+      "description": "Individual truss geometry and typology. Extracted from user prompt. Height is only set when the user states it; otherwise omit height_m and the Generator computes it from span and typology.",
+      "required": ["span_m", "typology"],
       "properties": {
         "typology": {
           "enum": [
@@ -74,7 +74,7 @@
         },
         "height_m": {
           "type": "number",
-          "description": "Height/rise of the truss from bottom to top chord at mid-span, in meters."
+          "description": "Height/rise of the truss from bottom to top chord at mid-span, in meters. Only include when the user explicitly states height; if omitted, the Generator computes it from span and typology (e.g. typical height/span ratios)."
         },
         "num_bays": {
           "type": "integer",

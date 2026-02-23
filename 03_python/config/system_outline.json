@@ -29,11 +29,13 @@
   "loads": {
     "load_application": "top_chord_nodes",
     "self_weight_kN_per_m2": 0.3,
-    "tributary_width_m": "from geometry_roof.truss_spacing_m or 1.0",
+    "tributary_width_m": "From geometry_roof: truss_spacing_m if set; else length_y_m/truss_count if both set; else 1.0 (unrealistic — interpreter should provide at least one).",
+    "tributary_along_span": "Interior top-chord nodes: tributary length = node_spacing. End top-chord nodes (first and last): tributary length = node_spacing/2. Point load = q_uls × tributary_width × tributary_length (Fz negative).",
+    "variable_load_for_gravity_ULS": "Use snow only as Q for downward ULS (do not add wind to snow; wind is separate combination).",
     "ULS_gamma_G": 1.35,
     "ULS_gamma_Q": 1.5
   },
-  "geometry_defaults": { "num_bays": 6, "note": "scale with span, min 4" },
+  "geometry_defaults": { "num_bays": 6, "note": "scale with span, min 4", "height_from_span": "When semantic outline omits height_m: compute height = span / ratio from typology (bowstring 4, warren 6–7, pratt/howe 5–6, fink/parker 4–5, flat 8–10, default 6)." },
   "optimization": {
     "defaults": { "node_positioning": false, "member_topology": false, "member_sizing": true },
     "volume_fraction": 0.4,
