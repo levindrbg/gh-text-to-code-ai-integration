@@ -16,7 +16,7 @@ from typing import Any, Dict, Optional
 
 from ttc_interpreter import create_run_id, get_latest_run_id, parse_prompt_to_structured
 from ttc_generator import generate_geometry_script
-from ttc_executor import run as run_executor
+from ttc_executor import run as run_executor, plot_geometric_output
 
 _dir = Path(__file__).resolve().parent
 
@@ -29,31 +29,30 @@ def _run_output_dir() -> Path:
     return _dir / "run_output"
 
 
+def _read_run_file(run_dir: Path, filename: str) -> str:
+    """Read a text file from run_dir; return empty string if missing or on error."""
+    path = run_dir / filename
+    if not path.exists():
+        return ""
+    try:
+        return path.read_text(encoding="utf-8")
+    except Exception:
+        return ""
+
+
 def load_run_outputs(run_id: str) -> tuple:
     """
-    Load communication and run_commentary for a given run_id from run_output/[run_id]/.
-    Returns (communication, run_commentary). Empty strings if run_id is empty or files missing.
+    Load communication and run_commentary for run_id from run_output/[run_id]/.
+    Returns (communication, run_commentary). Empty strings if run_id empty or files missing.
     """
     rid = (run_id or "").strip()
     if not rid:
         return ("", "")
     run_dir = _run_output_dir() / rid
-    comm = ""
-    if (run_dir / "communication.txt").exists():
-        try:
-            with open(run_dir / "communication.txt", encoding="utf-8") as f:
-                comm = f.read()
-        except Exception:
-            pass
-    commentary = ""
-    if (run_dir / "run_commentary.txt").exists():
-        try:
-            with open(run_dir / "run_commentary.txt", encoding="utf-8") as f:
-                commentary = f.read()
-        except Exception:
-            pass
+    comm = _read_run_file(run_dir, "communication.txt")
+    commentary = _read_run_file(run_dir, "run_commentary.txt")
     if not commentary.strip() and rid:
-        commentary = "Run {} (commentary not saved for this run).".format(rid)
+        commentary = f"Run {rid} (commentary not saved for this run)."
     return (comm, commentary)
 
 
@@ -119,15 +118,23 @@ def run(
         result["script_str"] = script_str
         log.append("Saved run_output/{}/gen_script.py".format(rid))
 
-        # 3. Executor: run script, get geometric JSON; save to run_output/[run_id]/geometric_output.json
+        # 3. Executor: run gen_script.py (it writes geometric_output.json in run_dir)
         log.append("Executing gen_script...")
-        geometric = run_executor(rid)
-        result["geometric_output"] = geometric
         run_dir = _run_output_dir() / rid
         run_dir.mkdir(parents=True, exist_ok=True)
-        with open(run_dir / "geometric_output.json", "w", encoding="utf-8") as f:
-            json.dump(geometric, f, indent=2)
-        log.append("Saved run_output/{}/geometric_output.json".format(rid))
+        run_executor(rid)
+        geometric_path = run_dir / "geometric_output.json"
+        geometric = {}
+        if geometric_path.exists():
+            with open(geometric_path, encoding="utf-8") as f:
+                geometric = json.load(f)
+            log.append("Saved run_output/{}/geometric_output.json".format(rid))
+        else:
+            log.append("Warning: gen_script did not write geometric_output.json")
+        result["geometric_output"] = geometric
+        # 4. Plot truss layout and save to run_output/[run_id]/truss_plot.png
+        plot_geometric_output(geometric, run_dir)
+        log.append("Saved run_output/{}/truss_plot.png".format(rid))
         log.append("Done.")
 
     except Exception as e:

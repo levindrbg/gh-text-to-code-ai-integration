@@ -36,15 +36,17 @@ If the user does not state a load value, fill it in using standard assumptions b
 
 Always tag each load value with its source: `"user_defined"` if the user stated it, `"standard_assumed"` if you filled it in.
 
-### 3. Infer typology if not stated
+### 3. Typology: extract or infer
 
-If the user does not name a truss type, infer the most appropriate one from span and context:
+If the user names a truss type, use the matching enum value: e.g. Parker → `parker`, Bowstring → `bowstring`, K-Truss → `k_truss`, Warren with verticals → `warren_with_verticals`, Waddell "A" Truss → `waddell_a_truss`, Double Intersection Pratt → `double_intersection_pratt`, etc. (Full list: warren, warren_with_verticals, pratt, howe, fink, flat, bowstring, parker, camelback, baltimore, pennsylvania, k_truss, double_intersection_pratt, double_intersection_warren, lattice, waddell_a_truss, vierendeel, custom_ground_structure.)
+
+If the user does not name a truss type, infer from span and context:
 - Span < 10m → `warren`
 - Span 10–20m → `warren_with_verticals`
 - Span > 20m → `pratt` or `warren_with_verticals`
-- Asymmetric load or cantilever description → `howe` or `pratt`
+- Asymmetric load or cantilever → `howe` or `pratt`
 
-State the inferred typology in the `notes` field.
+State the chosen or inferred typology in the `notes` field.
 
 ### 4. Determine support positions
 

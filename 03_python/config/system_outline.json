@@ -1,78 +1,45 @@
 {
-  "description": "Truss system config — read by the Generator alongside the filled semantic_outline.json. Contains all fixed system defaults, constraints, and the output contract. Not derived from the user prompt.",
-
-  "coordinate_system": {
-    "description": "2D truss in the [x, z] plane. Units: meters for coordinates, kN for forces."
-  },
-
-  "supports": {
-    "description": "Support boundary conditions. Always pinned. Support positions are provided by the Interpreter in semantic_outline.json → geometry_truss → support_positions as [x, z] pairs.",
-    "type": "pinned"
-  },
-
-  "loads": {
-    "description": "Load application rules. Load values (snow, wind, cladding) come from semantic_outline.json. These are the system-level rules for how they are assembled and applied.",
-    "load_application": "top_chord_nodes",
-    "self_weight_kN_per_m2": 0.3,
-    "tributary_width_m": "equals truss_spacing_m from semantic_outline.json → geometry_roof. If not provided, default to 1.0 m.",
-    "combination_standard": "Eurocode_EN1990",
-    "ULS_gamma_G": 1.35,
-    "ULS_gamma_Q": 1.5,
-    "governing_combination": "auto"
-  },
-
-  "geometry_defaults": {
-    "description": "Fallback values for optional geometry fields not stated in the user prompt.",
-    "num_bays": 6,
-    "note": "num_bays default is applied only when not provided by the Interpreter. Generator should scale this with span if possible: 1 bay per ~2m of span, minimum 4."
-  },
-
-  "optimization": {
-    "description": "Default optimization step states — applied when semantic_outline.json → optimization_flags does not explicitly set a step. User flags always override these defaults.",
-    "defaults": {
-      "node_positioning": false,
-      "member_topology": false,
-      "member_sizing": true
-    },
-    "objective": "minimize_compliance",
-    "volume_fraction": 0.4,
-    "algorithm": {
-      "method": "BESO",
-      "max_iterations": 40,
-      "convergence_tolerance": 0.001
-    },
-    "constraints": {
-      "max_deflection_ratio": 300,
-      "max_slenderness_ratio": 200,
-      "euler_buckling_check": true,
-      "min_member_area_mm2": 1.0,
-      "symmetry_enforced": false
-    }
-  },
-
-  "ground_structure": {
-    "description": "Ground structure grid settings. Only active when semantic_outline.json → geometry_truss → typology is 'custom_ground_structure'.",
-    "grid_resolution_x": 10,
-    "grid_resolution_y": 4,
-    "connectivity": "nearest_neighbor"
-  },
-
-  "material": {
-    "description": "Cross-section catalogue provided directly to the Generator as a list of Karamba3D profile strings (e.g. 'HEA100', 'HEA200'). The list is passed at runtime alongside this config. The Generator uses it as the discrete set of available profiles for member sizing — selecting the smallest profile whose area satisfies the stress and buckling constraints for each member.",
-    "source": "Karamba3D cross-section catalogue — provided at runtime",
-    "format": "List of profile name strings, ordered smallest to largest area",
-    "status": "provided_at_runtime"
+  "computation_process": {
+    "description": "Mandatory sequence for the generated script (04_knowledge base).",
+    "steps": [
+      {"id": "node_position", "description": "Nodes, members, support_nodes from topology ([0, num_bays]). If BESO: chord_indices, web_indices. Load nodes/values (tributary, top chord)."},
+      {"id": "typology_member_optimization", "description": "BESO: chord protection, only webs removable. Else: discrete profile per member. Stress + slenderness + buckling."},
+      {"id": "load_calculation_cross_section", "description": "Load vector (G, Q, ULS). FEA: K, BCs, solve, strains/stresses. Halt on LinAlgError. Profile or area update."},
+      {"id": "iteration", "description": "Init areas. Loop: FEA → update areas. Final FEA, then output."},
+      {"id": "output", "description": "Build geometric_output dict. MUST write geometric_output.json in script directory (and print). Filter min area."}
+    ],
+    "beso_chord_protection": "Only web members removable; chords resized, not removed. chord_indices, web_indices from geometry.",
+    "fea_singular_handling": "On LinAlgError: halt loop, log, do not crash."
   },
 
   "output": {
-    "description": "The exact output contract the Generator must produce. Matches the Karamba geometric_outline format.",
-    "format": "karamba_geometric_json",
+    "description": "The script MUST produce and write geometric_output.json. No file = pipeline broken.",
+    "output_file": "geometric_output.json",
+    "path_rule": "Script dir = os.path.dirname(os.path.abspath(__file__)); write file there. Mandatory.",
     "schema": {
-      "description": "2D truss in [x, z] plane. Units: m for coordinates, kN for forces. Supports are always pinned.",
-      "line_elements": "Array of members — each as {start: [x, z], end: [x, z], cross_section: 'profile_name'}. cross_section is the name string of the assigned profile from the catalogue.",
-      "support": "Array of support positions as [x, z] coordinate pairs",
-      "loads": "Array of combined ULS point loads as [x, z, Fz] at top chord node positions"
+      "description": "2D truss [x, z], m, kN. Pinned supports.",
+      "line_elements": "[ { start: [x,z], end: [x,z], cross_section: profile_name } ]",
+      "support": "[ [x,z], ... ]",
+      "loads": "[ [x,z,Fz], ... ] ULS point loads at top chord."
     }
-  }
+  },
 
+  "coordinate_system": "2D [x, z] plane. m, kN.",
+  "supports": "pinned. Positions from semantic_outline geometry_truss.support_positions.",
+  "loads": {
+    "load_application": "top_chord_nodes",
+    "self_weight_kN_per_m2": 0.3,
+    "tributary_width_m": "from geometry_roof.truss_spacing_m or 1.0",
+    "ULS_gamma_G": 1.35,
+    "ULS_gamma_Q": 1.5
+  },
+  "geometry_defaults": { "num_bays": 6, "note": "scale with span, min 4" },
+  "optimization": {
+    "defaults": { "node_positioning": false, "member_topology": false, "member_sizing": true },
+    "volume_fraction": 0.4,
+    "max_iterations": 40,
+    "constraints": { "max_deflection_ratio": 300, "max_slenderness_ratio": 200, "euler_buckling_check": true, "min_member_area_mm2": 1 }
+  },
+  "ground_structure": { "grid_resolution_x": 10, "grid_resolution_y": 4, "connectivity": "nearest_neighbor" },
+  "material": "Catalogue = list of profile names at runtime; script embeds HEA A, I_y, i_y."
 }

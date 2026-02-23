@@ -12,6 +12,8 @@ import sys
 import json
 import urllib.request
 from pathlib import Path
+
+from ttc_http import urlopen_with_retry
 from datetime import datetime
 from typing import Dict, Any, Tuple, Optional
 
@@ -210,8 +212,8 @@ Fill the JSON structure. If something is missing or unclear, say so in COMMUNICA
         },
     )
 
-    with urllib.request.urlopen(req) as r:
-        data = json.loads(r.read())
+    raw = urlopen_with_retry(req)
+    data = json.loads(raw)
 
     response_text = ""
     for block in data.get("content", []):

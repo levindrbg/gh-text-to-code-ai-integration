@@ -1,0 +1,2191 @@
+A new evolutionary topology optimization method for truss structures 
+towards practical design applications
+Yaping Lai
+a , b , *
+, Qi Cai
+c
+, Yu Li
+d
+, Jiayong Chen
+b
+, Yi Min Xie
+e , **
+a
+School of Civil Engineering, Chongqing University, Chongqing 400045, China
+b
+T.Y. Lin International Engineering Consulting (China) Co. Ltd, Chongqing 401121, China
+c
+College of Mechanics and Materials, Ho Hai University, Nanjing 211189, China
+d
+College of Architecture and Urban Planning, Tongji University, Shanghai 200092, China
+e
+Centre for Innovative Structures and Materials, School of Engineering, RMIT University, Melbourne 3001, Australia
+ARTICLE INFO
+Keywords:
+BESO
+Multiple materials
+Structural optimization
+Size optimization
+Ground structure
+ABSTRACT
+This paper presents a new topology optimization method and a comprehensive workflow for the practical design 
+of truss structures. It begins with discussing practical design requirements for truss topology optimization and 
+then introduces a technique for creating arbitrarily shaped ground structures suitable for complex geometries. To 
+address limitations in current truss optimization methods, we propose a dual-material truss-bidirectional 
+evolutionary structural optimization (DMT-BESO) method. This approach utilizes two materials that differ 
+significantly in tensile and compressive allowable stresses and moduli of elasticity. The DMT-BESO method in -
+tegrates the minimum energy principle with the full-stress design criterion, using bar cross-sectional areas as 
+design variables to achieve simultaneous topology and size optimization. By considering stress constraints, this 
+method ensures compliance with industry standards, enhancing both safety and material utilization. Addition -
+ally, a structural complexity control strategy is proposed to generate a near-optimal truss design and simplify the 
+optimized design while maintaining efficiency, making it more suitable for practical applications. The effec -
+tiveness of the DMT-BESO method and its complexity control strategy is validated through numerical examples 
+and the design of an arch bridge of composite materials.
+1. Introduction
+Topology optimization (TO) is a vital performance-based design 
+technique aimed at optimizing the distribution of materials within a 
+prescribed design domain to maximize the performance of the resultant 
+structure. This technique has gained significant attention in both 
+continuous and discrete design domains, leading to rapid methodolog -
+ical advancements over the recent decades. The most popular and well- 
+established methods of continuum-based TO, widely applied across 
+various disciplines, can be broadly categorized into four types: (1) ho -
+mogenization methods based on micro-perforated composite materials 
+[1] ; (2) material density distribution methods, epitomized by the solid 
+isotropic material with penalization (SIMP) method [2 – 4] ; (3) evolu -
+tionary methods, both the evolutionary structural optimization (ESO) 
+method [5,6] and bi-directional ESO (BESO) method [7] ; and (4) 
+boundary variation methods, such as the level set-based method [8,9]
+and the phase field method [10] . Recent trends in TO focus on 
+improving computational efficiency [11] and integrating multi-physics 
+fields [12] , multi-scale [13] , and multi-objective [14] considerations 
+to address real-world engineering challenges. Considering uncertainties 
+in material properties and loading conditions, robust TO [15,16] is 
+essential for practical applications, enhancing the reliability and per -
+formance of optimized structures. Continuous improvements in algo -
+rithms have made TO technology a powerful tool for designers to 
+explore lightweight, innovative, and high-performance structures in the 
+conceptual design process [17 – 22] .
+Undoubtedly, designers using continuum-based TO techniques can 
+obtain conceptual solutions with unique forms and superior structural 
+performance in the architectural and civil engineering fields [23 – 25] . 
+However, despite extensive and in-depth academic research on TO al -
+gorithms, their application in practical projects remains limited. Con -
+tinuum TO often generates irregular shapes that are difficult to use in 
+* Corresponding author at: School of Civil Engineering, Chongqing University, Chongqing 400045, China.
+** Corresponding author.
+E-mail addresses: laiyaping@tylin.com.cn (Y. Lai), mike.xie@rmit.edu.au (Y.M. Xie). 
+Contents lists available at ScienceDirect
+Engineering Structures
+journal homepage: www.else vier.com/loc ate/engstruc t
+https://doi.org/10.1016/j.engstruct.2024.119326
+Received 31 July 2024; Received in revised form 22 October 2024; Accepted 14 November 2024  
+Engineering Structures 324 (2025) 119326 
+Available online 22 November 2024 
+0141-0296/© 2024 The Author(s). Published by Elsevier Ltd. This is an open access article under the CC BY license ( http://creativecommons.org/licenses/by/4.0/ ). 
+
+subsequent design stages and are costly to construct, especially for 
+large-scale applications.
+In contrast, truss structures, known for their excellent stiffness-to- 
+weight ratios, modularity, material efficiency, and load capacity, are 
+widely used in engineering due to their simplicity and ease of con -
+struction. Trusses consist of straight members connected by hinges, 
+making them ideal for optimization. However, continuum-based TO 
+approaches are unsuitable for hinge-connected truss structures. There -
+fore, investigating TO algorithms specifically for truss structures is 
+crucial for practical design applications.
+In the late 19th and early 20th centuries, Maxwell [26] and Cilly [27]
+proposed the basic idea of TO for truss structures. Later, Michell [28]
+proposed the Michell truss model with minimum volume under stress 
+constraints. In the stress-constrained optimization model, he proved that 
+the bars in the structure with the minimum volume under the single load 
+case are in a full stress state. However, despite the Michell truss being 
+proved to be the optimal design under stress constraints, it is difficult to 
+apply in practical engineering since it contains an infinite number of 
+bars. Until Dorn et al. [29] proposed the ground structure (GS) method 
+in 1964, the numerical implementation of truss TO became feasible and 
+gained practical engineering design significance. Since then, numerous 
+scholars have conducted extensive investigations around the GS method. 
+Although this method is the most widely used for truss TO, weaknesses 
+still exist, including: (1) the optimal topology is highly dependent on the 
+initial GS; (2) the optimal solutions often contain too many bars and 
+most of them are too thin to be used directly; and (3) the design domains 
+used for theoretical studies are usually limited to regular geometric 
+shapes such as rectangles, where GS nodes can be arranged in a square 
+grid layout, while the design domain of complex irregular shapes should 
+be considered in practical engineering design. To address these issues, a 
+series of effective solutions have been proposed by Martinez et al. [30] , 
+Mckeown [31] , Rule [32] , He et al. [33] , Gilbert and Tyas [34] , Wang 
+and Arora [35] , Lu and Xie [36] . However, truss TO also requires 
+consideration of complex structural geometries, irregular GS generation, 
+and multi-material optimization in real engineering applications, which 
+have been less discussed in previous studies.
+In view of this, this study first focuses on the creation of truss GSs 
+within arbitrary shape design domains and the workflow for achieving 
+TO. Furthermore, building upon the BESO algorithm for truss structures 
+proposed by Cai and Feng [37] , our new algorithm incorporates the 
+differences in tensile and compressive properties of two materials. The 
+remainder of the paper is organized as follows: Section 2 outlines 
+practical design requirements in truss TO, approaches to creating arbi -
+trary GSs, and TO implementation platforms. Section 3 summarizes the 
+theoretical background of the BESO method for truss structures and 
+presents the dual-material truss BESO algorithm. Sections 4 and 5
+demonstrate the 2D and 3D numerical examples, respectively. Finally, 
+conclusions are drawn in Section 6 .
+2. GS creation approach, TO implementation platform and 
+workflows
+2.1. Practical design requirements in truss TO
+Despite the powerful capabilities of current TO techniques and the 
+potential for significant applications demonstrated, practical challenges 
+are commonly encountered, including poor practicability due to overly 
+complex outcomes and incoherent integration with existing workflows. 
+Practical design requirements for truss TO include critical issues such as 
+local or global instability [38,39] that have already been addressed. 
+Recent developments in truss TO show that hybrid algorithms effec -
+tively handle topology, size, and shape optimization, while improving 
+structural performance and efficiency. Dang et al. [40] introduced a 
+single-step hybrid method that enhances computational efficiency for 
+complex truss designs, while Lieu [41] presented a unified framework to 
+address static, dynamic, and transient behaviors of trusses. Similarly, 
+Oguz et al. [42] proposed a global optimization strategy tailored for 
+additive manufacturing, emphasizing the importance of integrating 
+design constraints during the TO process. Further investigations should 
+focus on manufacturability, simplicity, workflow integration, material 
+efficiency, and condition constraints to ensure the practical imple -
+mentation of TO in real-world applications. Adhering to these principles 
+guarantees the development of efficient, high-performance truss struc -
+tures suitable for practical use. 
+(1) Manufacturability: Optimized designs must be feasible with 
+existing fabrication techniques, considering constraints such as 
+member length, minimum cross-sectional areas, and specific 
+manufacturing processes. Addressing manufacturability ensures 
+smoother transitions from design to construction, reducing the 
+need for custom fabrication.
+(2) Simplicity and elegance: While aiming for optimal performance, 
+the truss TO outcomes should remain simple and elegant. Overly 
+complex solutions can complicate manufacturing, assembly, and 
+maintenance, whereas simpler designs are typically more prac -
+tical and cost-effective.
+(3) Material efficiency: Incorporating materials with distinct tensile 
+and compressive properties enhances the structural performance 
+and sustainability. Utilizing multiple materials allows for opti -
+mized designs that leverage the strengths of each material, 
+resulting in high-performance, cost-effective, and sustainable 
+structures.
+(4) Conditional constraints: Addressing multiple constraints such as 
+stresses, member cross-sectional areas, and serviceability ensures 
+that truss designs meet the diverse and complex demands of real- 
+world engineering applications. These constraints contribute to 
+structural robustness and reliability.
+(5) Integration with existing workflows: The TO process should 
+integrate seamlessly with current design and engineering work -
+flows, including compatibility with CAD software and other en -
+gineering tools. Effective integration facilitates the adoption of 
+optimized designs within broader project workflows.
+2.2. Approach to creating arbitrary morphological GSs
+The so-called GS method involves creating a network of trusses by 
+connecting discrete nodes based on the design domain’s shape and 
+boundary conditions. However, generating GS using traditional MAT -
+LAB codes [43,44] , although systematic, often encounters challenges in 
+terms of flexibility in handling complex geometries and practical 
+application to real-world scenarios. To address this, we have developed 
+a parameterized approach using Rhino and Grasshopper to create GSs.
+The Rhino software, extensively used across multiple industries, 
+excels in managing complex and irregular geometries, offering more 
+flexibility than MATLAB-based methods. Rhino’s advanced visualization 
+tools enable designers to visualize complex geometries in 3D, aiding the 
+understanding of spatial relationships and potential design issues. De -
+signers can effortlessly create intricate shapes and adapt GSs to fit non- 
+standard design domains. The Grasshopper plug-in provides powerful 
+parametric design capabilities, allowing users to quickly modify and 
+iterate designs in a visual programming environment.This iterative 
+process and flexibility facilitate efficient design refinement and explo -
+ration of various design alternatives and optimizations. Additionally, 
+Rhino integrates seamlessly with other CAD software, enhancing the 
+practicality and applicability of GSs in broader design processes.
+A simple and efficient approach, as shown in Fig. 1 (a), involves using 
+the "Grasshopper Python Script Editor" for creating GSs. Users input 
+relevant parameters in the Python code, and the Abaqus input file (.inp) 
+information for the entire GS is automatically generated. For example, in 
+creating a regular planar mesh GS, as shown in Fig. 1 (b), the process first 
+begins with defining key parameters such as grid dimensions, grid 
+spacing, and connection levels. Next, the script generates a grid of points 
+Y. Lai et al.                                                                                                                                                                                                                                      Engineering Structures 324 (2025) 119326 
+2 
+
+on the plane, representing potential node locations of the GS. Finally, it 
+systematically creates connections (or bars) between these points based 
+on the specified connection levels, ensuring that only the shortest and 
+most efficient connections are retained by checking for collinearity and 
+removing redundant bars. This methodology and principles are consis -
+tent with those established in the literature [43] . Additionally, user can 
+project the node coordinates onto an arbitrarily shaped spatial surface 
+from a regular planar grid to generate a spatial form GS, as shown in 
+Figs. 1 (c) and (d). This approach utilizes Python ’ s scripting capabilities 
+to automate the design process, resulting in a clear GS that can be easily 
+visualized and refined within Rhino.
+To obtain complex and arbitrary GSs, another method involves 
+parametric modeling using Rhino and Grasshopper by defining 3D ge -
+ometries through "parametric objects" and "association logic". This 
+approach creates GSs with arbitrary morphologies based on multiple 
+spatial control lines, enabling the 3D geometry of the GSs to be tuned 
+according to specific constraints and parametric variables, and auto -
+matically generating Abaqus pre-processing input data. For example, in 
+creating an arch-shaped 3D spatial GS shown in Figs. 2 (a) and (b), the 
+initial spatial control lines at the top and bottom are generated, as shown 
+in Fig. 2 (c); followed by setting control parameters such as the number 
+of nodes along the control lines and the maximum angle between con -
+nections (or bars), as shown in Fig. 2 (d). This parameter-based model 
+can provide multiple solutions depending on the values of each 
+parameter. By defining the parametric files generated during the 
+modeling process as reusable functional files, the efficiency of modeling 
+the GSs can be significantly improved.
+Regardless of the approach adopted, the initial GS design data is 
+generated in Grasshopper. The GS input file for finite element analysis 
+(FEA) is created and exported in strict accordance with the structure and 
+format of the Abaqus input file (.inp).
+2.3. TO implementation platform and workflows
+Abaqus, a versatile and general-purpose FEA software package, is 
+widely used for its robust capabilities in performing complex simula -
+tions and analyses. The Abaqus scripting interface, powered by Python, 
+provides comprehensive access to the software ’ s advanced FEA func -
+tionalities, allowing for the automation of modeling, analysis, and post- 
+processing tasks. This integration facilitates the seamless incorporation 
+of custom algorithms and workflows into the Abaqus environment, 
+which is particularly beneficial for iterative TO. The implementation of 
+our TO process follows a systematic workflow comprising the following 
+key steps: 
+(1) Import initial design: The initial design, generated from the.inp 
+file exported by Grasshopper, serves as the starting point for the 
+optimization process.
+Fig. 1. Schematic representation of GS generation using the "Grasshopper Python Script Editor": (a) creation of the GS and generation of the Abaqus input file (.inp); 
+(b) an example of a regular planar GS; (c) the base mesh with its corresponding spatial surface; and (d) a spatial GS derived from the evolution of the regular 
+planar GS.
+Y. Lai et al.                                                                                                                                                                                                                                      Engineering Structures 324 (2025) 119326 
+3 
+
+(2) Perform FEA: Using Abaqus, the initial GS undergoes FEA to 
+evaluate its structural performance under specified load cases 
+and boundary conditions. Analytical results, including nodal 
+displacements, elemental stresses, and strain energies, are crucial 
+inputs for the optimization algorithm.
+(3) Execute optimization algorithm: The TO algorithm iteratively 
+modifies the structure to minimize the objective function while 
+satisfying design constraints. At each iteration, the revised design 
+is analyzed in Abaqus, and the results guide the subsequent 
+design evolution.
+(4) Update design and judge convergence: The design variables are 
+updated according to the optimization criteria. This iterative 
+process continues until the convergence criteria are satisfied.
+(5) Export final design: Upon convergence, the optimized truss 
+structure is exported from Abaqus, ready for further analysis, 
+validation, or other applications.
+Fig. 3 shows the softwares and plug-ins used for the TO imple -
+mentation platform. By leveraging the capabilities of Abaqus, Grass -
+hopper, and Python, this TO process effectively integrates real-world 
+design considerations to meet the complex needs of modern engineering 
+applications.
+Fig. 2. Schematic diagram of GS generation using the "Parametric objects" and "Association logic": (a) Grasshopper parameters and Abaqus input file; (b) an arch 
+shaped 3D spatial GS; (c) initial control lines; (d) major control parameters.
+Y. Lai et al.                                                                                                                                                                                                                                      Engineering Structures 324 (2025) 119326 
+4 
+
+3. Methodology
+3.1. Theoretical background of BESO
+As an important branch of TO, the continuum BESO method allows 
+for the simultaneous removal and addition of materials. The mathe -
+matical model with minimum structural strain energy as the objective 
+function, elemental density as the design variable, and structurally 
+optimized volume ratio and equilibrium equations as the constraints can 
+be expressed as follows, respectively.
+Objective function: 
+C ( x
+i
+) =
+1
+2
+P
+T
+U (1) 
+Design variable: 
+x = { x
+1
+, x
+2
+, … , x
+n
+}
+T
+, x ∈ Ω
+R
+(2) 
+Constraints: 
+⎧
+⎪
+⎪
+⎪
+⎪
+⎪
+⎪
+⎪
+⎪
+⎨
+⎪
+⎪
+⎪
+⎪
+⎪
+⎪
+⎪
+⎪
+⎩
+K
+T
+U = P
+∑
+n
+i = 1
+V
+i
+x
+i
+  γ V
+0
+= 0
+E
+i
+= E
+i 0
+x
+p
+i
+x
+i
+= x
+min
+or 1
+(3) 
+where i denotes the element number, i = 1, 2, … , n , and x
+i 
+is a binary 
+design variable and can only take the value of x
+min 
+or 1. Here, x
+min 
+is a 
+smaller number greater than zero, typically 0.001. If x
+i 
+= x
+min
+, the 
+element is considered deleted; if x
+i 
+= 1, the element is retained in the 
+optimized structure. C ( x
+i
+) represents the strain energy of the structure as 
+a function of the design variable x
+i
+. P , U and K are the external load 
+vector, the displacement vector, and the total stiffness matrix, respec -
+tively. V
+i 
+is the volume of the i -th element and V
+0 
+is the original volume 
+before optimization. γ is the target volume optimization coefficient, 
+representing the ratio of the optimized volume to the original volume. 
+E
+i 0 
+and E
+i 
+are the elastic moduli before and after the optimization of the 
+i -th element, respectively, and p is the penalty coefficient for the element 
+density, generally taken as 3 according to the literature [45] .
+BESO is a gradient-based method that calculates element sensitivities 
+by differentiating the objective function. The sensitivity of each element 
+indicates the change in the objective function resulting from variations 
+in the state of the element, typically varying from x
+min 
+to 1. The opti -
+mization process begins with an initial full design domain where all 
+elements are present. Following the objective of compliance minimiza -
+tion, elements with the highest sensitivity transition from 1 to x
+min
+, 
+while those with the lowest sensitivity transition from x
+min 
+to 1. This 
+process is a typical "steepest descent" iterative method for finding the 
+optimal solution. More details on the continuum BESO method can be 
+found in Refs. [46,47] .
+Inspired by the optimization strategy of the continuum BESO 
+method, Cai and Feng proposed a truss-BESO (T-BESO) method. 
+Implemented on the MATLAB platform, the T-BESO method is capable of 
+achieving 2D planar truss optimization using a single material. Nu -
+merical examples reveal that the deviation of the computational results 
+of the method from the analytical solution is less than 1 %, demon -
+strating its accuracy and effectiveness. For more details on the T-BESO 
+method, see Ref. [37] .
+3.2. Dual-materials T-BESO
+Considering multiple materials with differences in tensile and 
+compressive properties in truss TO is essential for optimizing material 
+usage and improving cost-effectiveness. Assigning materials tailored to 
+force characteristics not only enhances structural performance but also 
+provides innovative and adaptable solutions. Therefore, we have further 
+developed a dual-material T-BESO (DMT-BESO) method based on the T- 
+BESO algorithmic framework, allowing the use of two materials with 
+significant differences in allowable stress and elastic modulus for tensile 
+and compressive bars, respectively.
+This approach is particularly valuable in practical engineering, 
+where materials like steel and concrete, with inherently different tensile 
+and compressive strengths, are often used together to achieve more 
+efficient and resilient structures. By incorporating materials with 
+distinct properties, truss TO can minimize material consumption, reduce 
+construction costs, and increase the durability of the final design, 
+making it highly applicable to industries such as civil engineering and 
+infrastructure development.
+3.2.1. Prerequisite assumptions
+In this study, we have simplified the DMT-BESO process to focus on 
+overall structural performance and material distribution. Challenges 
+related to interfacial regions are addressed under the following 
+assumptions: 
+(1) Linear elastic material behavior: Both materials are assumed to 
+exhibit linear elastic behavior throughout the optimization pro -
+cess. This simplification allows us to focus on structural perfor -
+mance, avoiding the complexities associated with nonlinearities, 
+such as plastic deformation or material failure at the interfaces.
+Fig. 3. Software programs and plugins used.
+Y. Lai et al.                                                                                                                                                                                                                                      Engineering Structures 324 (2025) 119326 
+5 
+
+(2) Minimal structural deformation: The structure is assumed to 
+undergo minimal deformation in response to external forces. This 
+small deformation assumption simplifies the analysis, ensuring 
+that stresses and displacements remain within the linear elastic 
+regime.
+(3) Continuity at the interface: A key assumption is that the materials 
+maintain complete continuity at the connection interface. 
+Displacement and stress are continuous across the interface, 
+ensuring fully coupled mechanical behavior. Consequently, no 
+slip, segregation, or stress concentration occurs at the interface, 
+and the connection behaves as though the two materials are 
+perfectly bonded.
+(4) Localized node connections: The connection between different 
+materials is treated as a localized issue at the nodes. Specific 
+interfacial behaviors, such as adhesion, bonding or local stress 
+concentration, are not considered in this study. Instead, the 
+connection is simplified to ensure cohesive behavior between the 
+materials in the global optimization process. Addressing the 
+detailed mechanics of interfacial behavior is beyond the scope of 
+this study but could be explored in future research.
+3.2.2. Optimization formulation
+The mathematical model for this optimization problem is defined as 
+follows: 
+(1) Objective function: In practical applications, minimizing strain 
+energy ensures that the structure achieves optimal stiffness under 
+the applied loads, which is essential for mechanical efficiency and 
+serviceability. Structures with minimized strain energy are 
+inherently more resistant to deformation and tend to exhibit su -
+perior performance, particularly under cyclic loading conditions. 
+The DMT-BESO method uses strain energy minimization as the 
+objective function by combining the energy principle with the 
+full-stress design criterion. When the full stress condition is met, 
+each member in the truss is fully utilized to its capacity, effec -
+tively leading to an optimal material distribution. 
+C ( A
+i
+) =
+1
+2
+F
+T
+U (4) 
+(2) Design variable: Unlike the continuum BESO method, where the 
+design variable x
+i 
+can only take values of x
+min 
+or 1, the DMT- 
+BESO method uses the cross-sectional area of the bars as the 
+design variable. Utilizing continuous design variables provides 
+greater flexibility in exploring the design space during the opti -
+mization process. While the use of discrete cross-sectional areas, 
+such as those selected from standardized catalog values is 
+necessary for practical applications, imposing such constraints 
+too early may limit the ability to identify optimal topologies and 
+fully explore the design space. Therefore, it is recommended to 
+apply continuous design variables during the TO phase to achieve 
+optimal or near-optimal solutions. The clustering algorithms can 
+then be performed in the post-processing stage to meet 
+manufacturing standards, as suggested in the literature [36] .
+A = { A
+1
+, A
+2
+, … , A
+n
+}
+T
+, A ∈ Ω
+R
+(5) 
+The DMT-BESO method defines two materials: material 1 and ma -
+terial 2, with properties listed in Table 1 .
+Both materials have a Poisson ’ s ratio of μ , with elastic moduli E
+t 
+and 
+E
+c
+, respectively. Material 1 is more suitable for tensile forces, while 
+material 2 more for compressive forces. The allowable stress of material 
+1 in tension is σ
+0 t 
+and the allowable stress of material 2 in compression is 
+σ
+0 c
+. Based on Eq. (5) , a new variable mt
+i 
+is introduced in describing the 
+material distribution and properties: 
+mt
+i
+=
+{
+1 ( material1 )
+2 ( material2 )
+, i = 1 , 2 , ..., n (6) 
+(3) Constraints: In engineering design, strength is a crucial criterion. 
+Stress constraints ensure that optimized designs adhere to in -
+dustry standards and codes, maintaining safety and reliability. A 
+primary goal in truss optimization towards practical design ap -
+plications is to ensure that all bars can withstand applied loads 
+without yielding. This necessitates the inclusion of stress con -
+straints to guarantee each bar operates within safe stress limits, 
+thereby preventing structural failure. Consequently, we incor -
+porate the relevant area and stress constraints for both materials, 
+as defined in Eq. (7) :
+⎧
+⎪
+⎪
+⎪
+⎪
+⎪
+⎪
+⎪
+⎪
+⎪
+⎨
+⎪
+⎪
+⎪
+⎪
+⎪
+⎪
+⎪
+⎪
+⎪
+⎩
+K
+T
+U = F
+A
+t , min
+⩽ A
+t
+⩽ A
+t , max
+A
+c , min
+⩽ A
+c
+⩽ A
+c , max
+σ
+ 
+0 , t
+⩽ σ
+t
+⩽ σ
++
+0 , t
+σ
+ 
+0 , c
+⩽ σ
+c
+⩽ σ
++
+0 , c
+(7) 
+In Eq. (7) , it is essential to first ensure that the design satisfies the 
+equilibrium equation. After identifying the tensile and compressive bars 
+and assigning materials, the cross-sectional area of the i -th bar is either 
+A
+t 
+or A
+c
+. The minimum and maximum cross-sectional areas for tensile 
+bars are A
+t , min 
+and A
+t , max
+, respectively, while those for compressed bars 
+are A
+c , min 
+and A
+c , max
+. To optimize the dimensions of the truss structure, A
+t 
+and A
+c 
+take continuous values within the ranges [ A
+t , min
+, A
+t , max
+] and 
+[ A
+c , min
+, A
+c , max
+], respectively. Additionally, A
+t , min 
+and A
+c , min 
+are set to very 
+small values greater than zero to prevent singularity in the structural 
+stiffness matrix. The tensile and compressive stresses of the i -th bar are 
+denoted by σ
+t 
+and σ
+c
+, respectively. The allowable tensile and compres -
+sive stresses for the material under tension are σ
+ 
+0 , t 
+and σ
++
+0 , t
+, and for the 
+material under compression are σ
+ 
+0 , c 
+and σ
++
+0 , c
+.
+3.2.3. Materials allocation
+In the dual-material allocation strategy for truss structures, materials 
+with superior tensile properties are assigned to tensile bars and those 
+with superior compressive properties to compression bars. This intuitive 
+approach aligns with actual engineering design principles for multi- 
+material structures. Therefore, materials with significant differences in 
+tensile and compressive performance can be allocated according to their 
+key mechanical properties, such as modulus of elasticity and allowable 
+stress: 
+E
+i
+=
+{
+E
+t
+( σ
+i
+≥ 0 )
+E
+c
+( σ
+i
+< 0 )
+(8) 
+σ
+0 , i
+=
+{
+σ
+0 , t
+( σ
+i
+≥ 0 )
+σ
+0 , c
+( σ
+i
+< 0 )
+(9) 
+where E
+i
+, σ
+0 , i 
+and σ
+i 
+represent the modulus of elasticity, the allowable 
+stress, and the normal stress of the i -th bar at each optimization iteration 
+step, respectively.
+Allocating materials based on tensile and compressive stress states 
+occurs at the early phases of the optimization, therefore, significant 
+differences in mechanical properties between the two materials can 
+cause drastic and discontinuous variations during initial optimization 
+process. To mitigate this, we adopt the following strategy, illustrated in 
+Table 1 
+Related properties of the materials.
+Materials Modulus of elasticity E Allowable stress [ σ ]
+material 1 E
+t
+σ
+0 t 
+(in tension)
+material 2 E
+c
+σ
+0 c 
+(in compression)
+Y. Lai et al.                                                                                                                                                                                                                                      Engineering Structures 324 (2025) 119326 
+6 
+
+Fig. 4 : initially, the initial modulus of elasticity and allowable stress of 
+the two materials are set to their median values. This ensures that the 
+mechanical properties of the two materials are identical at the beginning 
+of the optimization. Then, as the optimization process evolves, gradual 
+transitions to significantly different properties occur after the tensile and 
+compressive material allocation of the optimized structure has 
+stabilized.
+Corresponding to Fig. 4 , the mathematical expressions for the vari -
+ation of the elastic modulus and allowable stress of the material with the 
+iterative process are as follows: 
+E
+t
+= {
+( E
+c
++ E
+t
+)
+2
++
+( E
+t
+  E
+c
+)
+2
+⎛
+⎜
+⎜
+⎝
+1
+1 + e
+  ρ
+(
+m  
+k
+2
+)
+⎞
+⎟
+⎟
+⎠
+( m ≤ k )
+E
+t
+( m > k )
+(10) 
+E
+c
+= {
+( E
+c
++ E
+t
+)
+2
++
+( E
+c
+  E
+t
+)
+2
+⎛
+⎜
+⎜
+⎝
+1
+1 + e
+  ρ
+(
+m  
+k
+2
+)
+⎞
+⎟
+⎟
+⎠
+( m ≤ k )
+E
+c
+( m > k )
+(11) 
+σ
+0 , t
+= {
+ 
+σ
+0 , c
++ σ
+0 , t
+)
+2
++
+ 
+σ
+0 , t
+  σ
+0 , c
+)
+2
+⎛
+⎜
+⎜
+⎝
+1
+1 + e
+  ρ
+(
+m  
+k
+2
+)
+⎞
+⎟
+⎟
+⎠
+( m ≤ k )
+σ
+0 , t
+( m > k )
+(12) 
+σ
+0 , c
+= {
+ 
+σ
+0 , c
++ σ
+0 , t
+)
+2
++
+ 
+σ
+0 , t
+  σ
+0 , c
+)
+2
+⎛
+⎜
+⎜
+⎝
+1
+1 + e
+  ρ
+(
+m  
+k
+2
+)
+⎞
+⎟
+⎟
+⎠
+( m ≤ k )
+σ
+0 , c
+( m > k )
+(13) 
+where m denotes the number of iterative steps, and k represents the total 
+number of steps required to fully complete the variation in material 
+properties during the optimization process. According to our test, when 
+k is an integer not less than 400 and ρ is 0.025, a smooth transition can 
+be achieved.
+3.2.4. Sensitivity analysis
+Perform the sensitivity analysis is to evaluate how the strain energy 
+changes in response to variations in the cross-sectional areas of the truss 
+elements. This involves calculating the derivatives of the strain energy 
+with respect to each design variable, allowing for informed updates.
+Let the objective function Eq. (4) be C ( A ) =
+1
+2
+F
+T
+U = W
+ex
+, where W
+ex 
+denotes the work performed by the external load. The internal work of 
+the truss structure due to the axial deformation of the bars is: 
+W
+in
+=
+∑
+n
+i = 1
+1
+2
+F
+i
+Δ
+i
+=
+∑
+n
+i = 1
+F
+2
+i
+L
+i
+2 E
+i
+A
+i
+(14) 
+where F
+i
+, Δ
+i 
+and L
+i 
+denote the axial force, elongation and length of the i - 
+th bar respectively, E
+i 
+represents the elastic modulus of its material.
+According to the energy principle, the external work W
+ex 
+equals the 
+internal work W
+in
+. Therefore, the objective function can be revised as: 
+C ( A
+i
+) =
+∑
+n
+i = 1
+F
+2
+i
+L
+i
+2 E
+i
+A
+i
+(15) 
+To establish the relationship between the objective function and the 
+design variables, Eq. (15) is derived with respect to the design variables 
+A
+i
+, yielding: 
+α
+i
+=
+∂ C ( A
+i
+)
+∂ A
+i
+=  
+F
+2
+i
+L
+i
+2 E
+i
+A
+2
+i
+=  
+σ
+2
+i
+L
+i
+2 E
+i
+(16) 
+where α
+i 
+is the sensitivity of element i , reflecting the effect of the 
+changes in section A
+i 
+on the overall strain energy of the structure. Since 
+most bar lengths in GS are inconsistent, to eliminate the influence of bar 
+length on sensitivity, Eq. (16) can be revised as: 
+̃α
+i
+=  
+α
+i
+L
+i
+=
+σ
+2
+i
+2 E
+i
+(17) 
+Combining Eqs. (17) and (8) , the elemental sensitivity of the bars: 
+̃α
+i
+=
+⎧
+⎪
+⎪
+⎪
+⎨
+⎪
+⎪
+⎪
+⎩
+σ
+2
+i
+2 E
+t
+( σ
+i
+≥ 0 )
+σ
+2
+i
+2 E
+c
+( σ
+i
+< 0 )
+(18) 
+Optimal truss designs aim to achieve a full-stress state, where all bars 
+simultaneously reach their allowable stress limits under applied loads. 
+This approach maximizes both material efficiency and structural 
+Fig. 4. Strategies for material mechanical property variations during iterative processes: (a) modulus of elasticity; (b) allowable stress.
+Y. Lai et al.                                                                                                                                                                                                                                      Engineering Structures 324 (2025) 119326 
+7 
+
+performance. Studies by Ahrari and Atai [48] , as well as He et al. [49] , 
+demonstrate that the optimal truss design achieves a full-stress condi -
+tion. Consequently, Eq. (18) can be revised as follows: 
+̃α
+0
+=
+⎧
+⎪
+⎪
+⎪
+⎨
+⎪
+⎪
+⎪
+⎩
+σ
+2
+0 , t
+2 E
+t
+( σ
+i
+≥ 0 )
+σ
+2
+0 , c
+2 E
+c
+( σ
+i
+< 0 )
+(19) 
+where ̃α
+0 
+is the sensitivity threshold.
+The DMT-BESO algorithm updates the cross-sectional area of bars 
+based on the full-stress criterion, dynamically adjusting material dis -
+tribution to optimize structural performance. When the elemental 
+sensitivity ̃α
+i 
+is less than ̃α
+0
+, material utilization efficiency can be 
+enhanced by reducing the cross-sectional area of the bar. Conversely, 
+when ̃α
+i 
+exceeds ̃α
+0
+, the cross-sectional area needs to be increased to 
+ensure structural safety. This strategy effectively optimizes material 
+utilization by adjusting the cross-sectional area of the bars. If the cross- 
+sectional area reaches the minimum value of A
+t , min 
+or A
+c , min
+, the bar is 
+considered removed from the structure due to insufficient stiffness, thus 
+achieving a topological change in the structure.
+It is worth noting that the continuum BESO method requires sorting 
+elemental sensitivities before adding or deleting elements according to 
+the sensitivity threshold. However, the DMT-BESO method bypasses this 
+sorting requirement by employing a different strategy for evolutionary 
+optimization.
+3.2.5. Design variable update strategy
+The DMT-BESO method, adhering to typical evolutionary optimiza -
+tion procedures, requires iterative updates of design variables to reach 
+an optimal solution. While sufficient iteration steps ensure a smooth and 
+stable optimization process, excessive steps can reduce computational 
+efficiency. To address this, we propose the following design variable 
+update strategy: At the beginning of the optimization process, larger 
+step-size updates are advantageous for quickly finding a feasible solu -
+tion. As the process continues and approaches convergence, smaller 
+step-size updates help avoid oscillations and achieve stable and accurate 
+convergence. To enhance computational efficiency by minimizing the 
+number of iteration steps while ensuring smoothness and stability, this 
+study introduces a dynamic and adaptive updating mechanism for 
+controlling the update rate of the design variables as follows: 
+ω
+i
+= {
+( 1 . 0 + 0 . 1e
+  μ m
+) ( ̃α
+i
+≥ ̃α
+0
+)
+( 1 . 0   0 . 1e
+  μ m
+) ( ̃α
+i
+< ̃α
+0
+)
+(20) 
+μ =
+{
+0 . 005 e
+  15 λ
+( λ < 0 . 1 )
+0 . 001 ( λ ≥ 0 . 1 )
+(21) 
+In Eq. (20) , ω
+i 
+represents the update factor for the i -th bar, respec -
+tively. The exponential decay term e
+  μ m 
+ensures that ω
+i 
+decreases as the 
+number of iteration steps m increases, allowing for finer adjustments as 
+the solution nears the optimal state. In Eq. (21) , λ denotes the conver -
+gence metric. By distinguishing between cases where λ is less than 0.1 
+and when it is not, the function applies different rates of decay. This 
+distinction enables more aggressive updates when the solution is far 
+from convergence and more cautious updates when it is close.
+Fig. 5 illustrates the adaptive update strategy represented by Eqs. 
+(20) and (21) , showing the variation of the update factor across iteration 
+steps. The use of different exponential rates (blue and red lines) provides 
+flexibility in the update strategy. Both Figs. 5 (a) and (b) highlight an 
+adaptive range where the update factor adjusts dynamically, repre -
+sented by the shaded areas. At each iteration step, the update factor can 
+be adaptively selected within the blue and red ranges based on the 
+convergence metric λ . This adaptive mechanism is crucial for achieving 
+a balance between rapid convergence and precise fine-tuning, ultimately 
+leading to an optimal and robust design.
+For increasing design variables: 
+A
+i , m
+= {
+max ( A
+t , max
+, ω
+i
+A
+i , m   1
+) ( σ
+i
+≥ 0 )
+max ( A
+c , max
+, ω
+i
+A
+i , m   1
+) ( σ
+i
+< 0 )
+(22) 
+For decreasing design variables: 
+A
+i , m
+= {
+min ( A
+t , min
+, ω
+i
+A
+i , m   1
+) ( σ
+i
+≥ 0 )
+min ( A
+c , min
+, ω
+i
+A
+i , m   1
+) ( σ
+i
+< 0 )
+(23) 
+where A
+i , m 
+is the updated area of the i -th bar at iteration m , and A
+i , m   1 
+is 
+the area from the previous iteration.
+Both Eqs. (22) and (23) are integral to the iterative optimization 
+process. They balance the need to adjust the design variables based on 
+the performance criteria while adhering to the area constraints in Eq. 
+(7) . The use of ω
+i
+A
+i , m   1 
+allows for gradual adjustments, ensuring sta -
+bility in the optimization process. Eq. (22) ensures that A
+i , m 
+does not 
+exceed the maximum allowable area for tensile or compressive bars, 
+preventing the bar area from becoming too large. Similarly, Eq. (23)
+ensures that A
+i , m 
+does not fall below the minimum allowable area for 
+tensile or compressive bars, preventing the bar area from becoming too 
+small.
+Notably, unlike continuous BESO methods that typically change only 
+2 % of the elements per iteration [45] , the DMT-BESO method can 
+optimize all elements simultaneously in each iteration.
+3.2.6. Multiple load cases
+Considering multiple load cases in truss TO ensures that the design is 
+robust and performs well across various practical scenarios. This 
+approach enhances the structural safety and reliability of the optimized 
+Fig. 5. Schematic of the design variable adaptive update strategy: (a) increase and (b) decrease.
+Y. Lai et al.                                                                                                                                                                                                                                      Engineering Structures 324 (2025) 119326 
+8 
+
+design. To achieve this, we use the stress envelope method to calculate 
+the maximum and minimum stresses experienced by each element under 
+all load conditions. Let σ
+s
+i 
+denote the normal stress in the i -th element 
+under load condition S . The maximum and minimum stresses, σ
+max , i 
+and 
+σ
+min , i
+, are given by: 
+σ
+max , i
+= max
+S ∈ S
+( σ
+S
+i
+) (24) 
+σ
+min , i
+= min
+S ∈ S
+( σ
+S
+i
+) (25) 
+The critical stress σ
+i 
+for element i is then determined based on the 
+absolute values of the maximum and minimum stresses: 
+σ
+i
+=
+{
+σ
+max , i
+if ​ | σ
+max , i
+| ≥ | σ
+min , i
+|
+σ
+min , i
+otherwise ​
+(26) 
+Similarly, let α
+( S )
+i 
+represent the sensitivity of the i -th element under 
+load condition S . The maximum sensitivity for element i across all load 
+cases is computed as: 
+α
+max , i
+= max
+S
+( α
+( S )
+i
+) (27) 
+By identifying the maximum sensitivity for all load conditions, the 
+worst-case scenario for sensitivity can be captured, ensuring the design 
+remains robust under the most sensitive conditions.
+Using the maximum absolute stress and maximum sensitivity for 
+each element is a conservative approach that ensures robustness under 
+the worst loading conditions. However, this approach prevents potential 
+failure modes in practical engineering applications and makes the 
+structure more reliable.
+3.2.7. Convergence criterion
+As the cycle of FEA and design variable updating continues, the total 
+volume of the optimized structure tends to stabilize. To determine 
+whether the program is converging, the total volume of the structure 
+should be calculated for each iteration. The relative variation in total 
+volume measures the convergence of the program, expressed as: 
+λ =
+∣
+∑
+N
+i = 1
+V
+k   i + 1
+ 
+∑
+N
+i = 1
+V
+k   N   i + 1
+∣
+∑
+N
+i = 1
+V
+k   i + 1
+≤ τ (28) 
+In the optimization process, k represents the current iteration num -
+ber, while τ is the convergence tolerance that determines when the 
+optimization has stabilized. N is the number of iterations used to 
+calculate the average volume change. Typically, N is set to 5, which 
+means the average total volume change over the previous 10 iterations is 
+monitored to ensure that it is sufficiently small and falls within the 
+specified tolerance. This ensures that the design has stabilized before 
+concluding the optimization process. In the numerical examples pre -
+sented, the convergence tolerance τ = 0 . 0001 is used.
+3.2.8. Procedure
+The evolutionary iteration process of the DMT-BESO method in -
+volves the following steps: 
+(1) Establish the GS, define loads, boundary conditions, and initialize 
+design variables.
+(2) Perform FEA to calculate normal stresses for each element.
+(3) Calculate the variations of tensile and compressive material 
+properties during the optimization process based on the iteration 
+number.
+(4) Compute element sensitivities and sensitivity thresholds.
+(5) Assign tensile material properties to bars in tension and 
+compressive material properties to bars in compression.
+(6) Compare element sensitivities with thresholds and adjust design 
+variables accordingly.
+(7) Check for convergence using the specified criterion. If conver -
+gence is not achieved, repeat the process from step (2).
+Fig. 6 shows the DMT-BESO method flowchart. The algorithm is 
+programmed in Python and integrated with the Abaqus software that is 
+used as a FEA solver.
+3.3. Structural complexity control strategy
+In the context of truss TO, controlling structural complexity is crucial 
+for achieving a practical and manufacturable design. Overly complex 
+truss structures are difficult to fabricate, assemble, and maintain, lead -
+ing to higher costs. Minimizing unnecessary complexity by reducing the 
+number of thin or non-essential bars contributes to the design of simple 
+and elegant structures while preserving load-carrying capacity and 
+robustness.
+To achieve this objective, it is essential to explore an efficient 
+approach for generating the near-optimal truss designs rather than 
+strictly theoretical optimal solutions. Therefore, we propose a simple 
+and effective approach: penalizing thin bars in the truss structure and 
+iteratively adjusting element areas according to stress limits after a 
+certain number of iterations. "Penalty" refers to artificially reducing the 
+importance of certain bars (or elements) in the optimized structure.
+The penalty function is designed to reduce thin bars, which 
+contribute minimally to the overall structural stiffness. The process be -
+gins by calculating the maximum area A
+max 
+across all bars, representing 
+the largest cross-sectional area in the structure: 
+A
+max
+= max ( A
+i
+) (29) 
+To ensure that bars with small cross-sectional areas are penalized 
+more aggressively, we define a penalty threshold at 5 % of A
+max
+. Bars 
+whose areas fall below this threshold will be subject to the penalty 
+function. The penalty function P
+y
+( A
+i
+, A
+min
+) is defined as follows: 
+P
+y
+( A
+i
+, A
+min
+) = min
+(
+0 . 9 ,
+1
+1 + e
+  0 . 01 ( A
+i
+/ A
+min
+)
+)
+(30) 
+Eq. (30) computes a penalty factor based on the ratio of the area A
+i 
+to 
+the minimum allowable area A
+min
+. It uses a sigmoid-like function to 
+ensure the penalty factor remains within the range of 0.5 to 0.9. When A
+i 
+is nearer to A
+min
+, the penalty factor is closer to 0.5, thus penalizing thin 
+bars with minor contributions to the structural stiffness more quickly.
+If A
+i
+< 0 . 05 A
+max 
+and ̃α
+i
+< ̃α
+0 
+are both satisfied, then the area for the 
+bars are penalized using the penalty factor computed by the Eq. (30) : 
+A
+i
+= {
+A
+i
+Py ( A
+i
+, A
+t , min
+) if ​ σ
+i
+≥ 0
+A
+i
+Py
+ 
+A
+i
+, A
+c , min
+)
+otherwise
+(31) 
+However, penalizing thin bars might cause stress overruns in the 
+remaining bars. Therefore, an iterative adjustment to the area of bars 
+with stress overruns is performed later in the optimization process. The 
+cumulative area increase update approach for stress-exceeding bars is as 
+follows: 
+φ
+i
+← φ
+i
+( 1 . 0 + 0 . 01e
+  0 . 05 ( m   k )
+) (32) 
+where φ
+i 
+is cumulative area increase factor, and e
+  0 . 05 ( m   k )
+ensures that 
+adjustments become less aggressive as m increases beyond k , allowing 
+for gradual convergence in the optimization process.
+The area update based on φ
+i 
+is given by: 
+A
+i
+= {
+min
+ 
+A
+t , max
+, A
+i
+φ
+i
+)
+if ​ σ
+i
+> σ
+0 , t
+min
+ 
+A
+c , max
+, A
+i
+φ
+i
+)
+if ​ σ
+i
+< σ
+0 , c
+(33) 
+This approach balances maintaining structural feasibility with opti -
+mization goals. By applying cumulative area increase updates based on 
+stress conditions, it ensures that stress-exceeding bars are adjusted in a 
+controlled manner, preventing drastic changes while steadily guiding 
+the design towards optimal stress distribution. The exponential decay 
+Y. Lai et al.                                                                                                                                                                                                                                      Engineering Structures 324 (2025) 119326 
+9 
+
+function is used to gradually reduce the adjustment factor during the 
+optimization process. This ensures a smooth transition between early 
+and late phases — early phases require larger updates for fast explora -
+tion, while later phases require finer tuning to prevent oscillations and 
+improve stability. The smooth reduction provided by exponential decay 
+makes the optimization process both robust and reliable by balancing 
+exploration and convergence.
+Fig. 7 shows the workflow of structural complexity control strategy. 
+The workflow integrates penalization and iterative adjustment. Appro -
+priate penalties for thin bars with low sensitivity can reduce the number 
+of overly slender bars, leading to a simpler and more elegant optimized 
+structure. Iterative adjustment of stress-exceeding elemental areas in the 
+later stages of optimization ensures compliance with stress constraints, 
+thereby maintaining structural safety in the TO outcomes.
+4. Numerical examples
+The primary purpose of this section is to demonstrate the validity, 
+robustness, and accuracy of the above methodology through a series of 
+numerical examples. These examples aim to highlight the capability of 
+the DMT-BESO method to optimize the truss structure by utilizing the 
+distinct properties of two different materials. Furthermore, the examples 
+showcase the approach ’ s ability to handle complex geometries, ensure 
+compliance with industry standards, and maintain structural simplicity 
+and manufacturability through the implemented complexity control 
+strategy.
+4.1. TO operating environment and parameter settings
+To validate the effectiveness of the DMT-BESO method, we con -
+ducted a comparative study between single- and dual-material-based 
+truss TO in the following study cases. All numerical examples were 
+performed on a desktop computer equipped with a 12th Gen Intel(R) 
+Core(TM) i7 – 12700 CPU @ 2.10 GHz and 32 GB of RAM, running a 64- 
+bit Windows 10 Professional Edition operating system. The TO process 
+was implemented using Abaqus version 2023.
+For dual-material truss TO, Q235 steel was used for tension and C50 
+concrete for compression. For single-material truss TO, two materials 
+with identical mechanical properties, Q235 steel, were used to easily 
+and conveniently achieve the optimization via the DMT-BESO method. 
+Table 2 lists the properties of steel and concrete material according to 
+[50,51] . In both single- and dual-material cases, the initial 
+cross-sectional area of each bar was set to 100 mm
+2
+, with an external 
+load P = 10 kN. The minimum and maximum values of the 
+cross-sectional area constraints were set to A
+t , min
+= A
+c , min
+= 1.0 × 10 
+  6 
+mm
+2
+, and A
+t , max
+= A
+c , max
+= 1.0 × 10 
+6 
+mm
+2
+, respectively.
+Fig. 6. Flowchart of the DMT-BESO method.
+Fig. 7. Workflow of structural complexity control strategy.
+Table 2 
+Related properties of the materials.
+Materials Modulus of elasticity E (MPa) Allowable stress [ σ ] (MPa)
+Q235 steel 2.06 × 10
+5
+215
+C60 concrete 3.6 × 10
+4
+27.5
+Note: The allowable stress takes the design strength of the material.
+Y. Lai et al.                                                                                                                                                                                                                                      Engineering Structures 324 (2025) 119326 
+10 
+
+4.2. 2D simple support truss
+In the first numerical example, a 2D simply supported truss was 
+optimized. The GS generated by using the first method introduced in 
+Section 2.2 is illustrated in Fig. 8 (a). The base mesh for the GS measures 
+400 mm × 400 mm and consists of 99 bars. Figs. 8 (b) and (c) show that 
+the optimized structures are very similar to conventional truss struc -
+tures. Additionally, the normal stresses in the bars of the optimized 
+structure are close to the respective stress constraints. The volume and 
+strain energy of the optimized structure in Fig. 8 (b) are within 0.5 % 
+errors from the results of an identical case in the literature [37] . Fig. 8 (b) 
+shows that the tensile and compressive bars are of comparable thickness, 
+while the compressive bars in Fig. 8 (c) are much thicker than the tensile 
+bars due to the significantly lower allowable stresses of C50 concrete 
+compared to Q235 steel. The TO processes for single- and dual-material 
+cases converge after 408 and 431 iterations, respectively, with total 
+elapsed time of 99 and 106 min, respectively.
+4.3. 2D Michell truss
+As a well-established optimal solution, the Michell truss serves as a 
+benchmark for validating and comparing new optimization algorithms 
+and methods. According to the literature [28] , the analytical solution for 
+its minimum volume when L
+y
+<
+̅̅ ̅
+2
+√
+L
+x
+/ 4 is: 
+V
+anal
+= P
+(
+L
+x
+2
+)(
+1
+2
++
+π
+4
+)
+[
+1
+σ
++
++
+1
+σ
+ 
+] (34) 
+where P represents the concentrated force value, and L
+x 
+and L
+y 
+denote 
+the length and width of the design domain, respectively.
+In the second numerical example, we verified the accuracy and ef -
+ficiency of the DMT-BESO method using Michell trusses. As shown in 
+Figs. 9 (a) and (b), the design domain measures 5 m in length and 2 m in 
+width, with a base mesh size of 250 mm × 250 mm, comprising 160 
+base meshes and 189 nodes. In the generated GS, each node connects to 
+all nodes in up to three neighboring base meshes, resulting in a total of 
+3116 bars.
+Figs. 9 (c) to (f) presents the optimization results of the Michell truss 
+using both single- and dual-material approaches, with and without 
+structural complexity control. As shown in Figs. 9 (c) and (e), without 
+complexity control, the optimized structures exhibit dense thin bars 
+around the main stress-carrying members irrespective of the single- or 
+dual-material cases. On the contrary, with complexity control as shown 
+in Figs. 9 (d) and (f), the optimized structure is significantly simplified 
+while maintaining efficiency and is more suitable for practical 
+applications.
+Fig. 10 shows the evolution histories of Michell truss optimization 
+with complexity control. In Figs. 10 (a) and 10(b), both strain energy 
+and volume initially evolve rapidly, indicating that larger step-size up -
+dates effectively promote the optimization process toward a feasible 
+solution. Gradually smaller step sizes in later iterations ensure accurate 
+convergence. Throughout the optimization process, especially in the 
+early stages, no severe oscillations are observed, demonstrating the 
+feasibility and effectiveness of the material allocation approach 
+described in Section 3.3 . The strain energy in the dual-material case is 
+lower than in the single-material case, fully utilizing the different 
+properties of the two materials to achieve superior overall structural 
+performance.
+The analytical solution for the minimum volume in this numerical 
+example is 2. 989 × 10
+5 
+mm
+3
+, and the structural strain energy is 
+33.539 J under full stress, providing a theoretical benchmark for eval -
+uating optimization performance. Table 3 compares the optimized vol -
+ume ( V
+opt
+) and structural strain energy ( C
+opt
+) with and without 
+complexity control for single- and dual-material cases. The V
+opt 
+and C
+opt 
+values for the single-material cases, both with and without complexity 
+control, are relatively close to the analytical solution. Without 
+complexity control, the V
+opt 
+and C
+opt 
+values are approximately 1.19 % 
+and 1.05 % higher than the analytical solution, respectively. With 
+complexity control, the V
+opt 
+and C
+opt 
+values are approximately 2.04 % 
+and 0.19 % higher than the analytical solution, respectively. Comparing 
+the dual-material cases to the single-material cases, the V
+opt 
+and C
+opt 
+values for the former differ significantly. This discrepancy is attributed 
+to the considerably lower elastic modulus and allowable stress of con -
+crete compared to steel. However, the V
+opt 
+and C
+opt 
+values are compa -
+rable between cases with and without complexity control, indicating 
+that complexity control slightly increases material usage but ensures a 
+more feasible and manufacturable design.
+4.4. 2D Hemp cantilever
+As shown in Figs. 11 (a) and (b), the Hemp cantilever truss is sub -
+jected to a concentrated load P at mid-height on the right side and 
+supported by two fixed hinges on the left. The design domain is 
+3.6 m × 3.6 m with a base mesh size of 300 mm × 300 mm, consisting 
+of 144 base meshes and 169 nodes. Each node in the generated GS 
+connects to all nodes in up to four neighboring base meshes, creating a 
+total of 2840 bars. According to Hemp [52] , the optimal analytical 
+volume of the cantilever is 4 . 32168 PL / σ . Therefore, the analytical so -
+lution in this numerical example is 7.236 × 10
+5 
+mm
+3
+, with a corre -
+sponding strain energy of 81.119 J. For single-material cases with 
+complexity control, the volume and strain energy of the optimized 
+structure are 7.467 × 10
+5 
+mm
+3 
+and 82.526 J, respectively. Compared to 
+the analytical solution, the increases were only 3.2 % and 1.6 %, 
+respectively. It demonstrates the accuracy and effectiveness of the 
+DMT-BESO method and structural complexity control strategy in 
+generating near-optimal truss designs once again.
+Figs. 11 (c) and (d) presents the optimization results for both single- 
+and dual-material cases with structural complexity control. The opti -
+mized structure exhibits a clear, efficient load path from the load 
+application point to the fixed supports. Moreover, the stress distribu -
+tions in both optimization scenarios are well controlled, with bar 
+stresses close to their respective constraints, indicating effective utili -
+zation of material properties. In the single-material case, the tensile 
+(red) and compression (blue) bars are identical in size, and their topo -
+logical morphology is symmetric. Conversely, the dual-material results 
+in Fig. 11 (d) shows significantly different dimensions and asymmetric in 
+Fig. 8. Optimization of simply supported truss: (a) GS with dimension, load, 
+and boundary conditions; (b) single-material result; and (c) dual-material result 
+(units: mm for dimensions, MPa for stress).
+Y. Lai et al.                                                                                                                                                                                                                                      Engineering Structures 324 (2025) 119326 
+11 
+
+Fig. 9. Optimization of Michell truss: (a) base mesh dimensions; (b) GS with load and boundary conditions; (c) and (d) single-material result without/with structural 
+complexity control; (e) and (f) dual-material result without/with structural complexity control (units: mm for dimensions, MPa for stress).
+Fig. 10. Evolution histories comparison of Michell truss: (a) single-material with structural complexity control; (b) dual-material with structural complexity control.
+Table 3 
+Comparison for single- and dual-material cases with/without complexity control.
+Study case Without complexity control With complexity control
+V
+opt 
+(mm
+3
+) C
+opt 
+(J) Total time (minute) Total iterations V
+opt 
+(mm
+3
+) C
+opt 
+(J) Total time (minute) Total iterations
+Single-material case 3.024 × 10
+5
+33.892 270 406 3.05 × 10
+5
+33.603 273 410
+Dual- material case 16.843 × 10
+5
+27.751 279 409 16.974 × 10
+5
+27.560 295 432
+Note: V
+opt 
+and C
+opt 
+represent the optimized volume and structural strain energy, respectively.
+Y. Lai et al.                                                                                                                                                                                                                                      Engineering Structures 324 (2025) 119326 
+12 
+
+topological morphology for the tensile and compression bars compared 
+to the single-material results in Fig. 11 (c). The compression bars in 
+Fig. 11 (d) are stouter than those in Fig. 11 (c). This is quite similar to the 
+results obtained using the multi-material continuum BESO method. The 
+dual-material design allows the compression bars to maintain lower 
+stress levels and use larger cross-sectional areas, which increases the 
+bending moment of inertia and decreases the length-to-slenderness 
+ratio. This greatly enhances the overall stability of the structure. 
+Fig. 12 shows the evolutionary histories of Hemp cantilever optimiza -
+tion with complexity control, and the regularity is consistent with the 
+previous example. The TO process converged after 431 and 452 itera -
+tions for single- and dual-material cases, respectively, with total 
+consuming time of 256 and 271 min, respectively.
+4.5. 3D spatial dome
+The fouth numerical example verifies the validity of the DMT-BESO 
+method for spatial trusses. By projecting the planar mesh shown in 
+Fig. 11 (a) onto the z = 1 . 5
+ 
+x
+2
++ y
+2
+)
+spatial surface, a spatial mesh shown 
+in Fig. 13 (a) can be obtained. Consequently, using the method intro -
+duced in Section 2.2 , the GS of this spatial dome corresponding to Fig. 11
+(b) was generated, as shown in Fig. 13 (b). It matches the third numerical 
+example in terms of the number of bars and connection levels. The 
+distinction is that the centralized force was applied to the node at the 
+highest point, while the four fixed-hinge supports were set at the lowest 
+point.
+The single- and dual-material optimization results in Figs. 13 (c) and 
+(f) demonstrate the capability to determine the most efficient force 
+transfer paths from a complex 3D GS. The structural complexity control 
+approach effectively simplifies the design while maintaining the 
+Fig. 11. Optimization of Hamp Cantilever: (a) base mesh dimensions; (b) GS with load and boundary conditions; (c) single-material result with structural complexity 
+control; and (d) dual-material result with structural complexity control (units: mm for dimensions, MPa for stress).
+Fig. 12. Evolution histories comparison of Hamp Cantilever: (a) single-material with structural complexity control; (b) dual-material with structural 
+complexity control.
+Y. Lai et al.                                                                                                                                                                                                                                      Engineering Structures 324 (2025) 119326 
+13 
+
+integrity of the optimized structure. This simplification not only pre -
+serves structural performance but also facilitates easier and more cost- 
+effective construction practices. The stress color mapping in Figs. 13
+(d) and (g) clearly shows that the bar stresses are within the safe range, 
+demonstrating the reliability and safety of the optimized designs. 
+Despite the higher elastic modulus of steel compared to concrete, the 
+comparison between Figs. 13 (e) and (h) indicates that the structural 
+stiffness in the dual-material case is greater than in the single-material 
+case, as evidenced by the displacement in the Z-direction. The TO pro -
+cesses for single- and dual-material cases converge after 406 and 408 
+iterations, respectively, with total elapsed time of 239 and 243 min, 
+respectively.
+5. A practical application
+In this section, we applied the DMT-BESO method for the structural 
+optimization of a single-span through arch bridge, focusing on opti -
+mizing the hanger arrangement for structural performance. The bridge, 
+designed with a main span of 120 m and a width of 10 m, features a 
+basket handle arch that slopes inward to enhance both stability and 
+aesthetics. The composite structure incorporates ultra-high- 
+performance concrete (UHPC) for its excellent compressive strength 
+and high-strength steel for its superior tensile properties, as detailed in 
+Table 4 . The modulus of elasticity and allowable stresses for these ma -
+terials were referenced from [53,54] .
+For structural optimization of this bridge, the dominant load condi -
+tions considered were dead and vehicle loads, which were converted 
+into concentrated loads imposed on the tie beam nodes. Besides, to 
+simplify the calculations while providing safe and reliable results, the 
+vehicle static load approximation and appropriate impact coefficients 
+were used to capture the effects of dynamic loads. Since bridge struc -
+tures experience variable loads during service, leading to different stress 
+distributions and potential failure modes, optimizing for a single load 
+condition can result in designs that fail under different or combined 
+loads. Therefore, in the optimization process, in addition to applying 
+structural complexity control to simplify the structure, we employed 
+multiple load cases, i.e., superimposing the dead load and the vehicle 
+moving load into five major load cases in order to simulate the vehicle 
+travelling across the bridge. The TO processes converge after 419 iter -
+ations, with total elapsed time of 216 min.
+The arch-shaped 3D spatial GS shown in Fig. 14 (a) consists of 814 
+bars and was generated via the second method introduced in Section 2.2 . 
+As depicted in Fig. 14 (b), the nodes are distributed solely on the top and 
+bottom edges of the GS, while the bars intersect without forming addi -
+tional intersections. The initial cross-sectional area of each bar, along 
+with the minimum and maximum values of the cross-sectional area 
+constraints, aligns with those described in Section 4.1 . Figs. 14 (c) to (g) 
+illustrate the GS with boundary conditions under the five major load 
+cases and corresponding optimized designs. The stress color maps 
+indicate that the stress levels of all bars remain within acceptable limits, 
+ensuring the bridge can safely withstand the applied loads while effi -
+ciently using materials. The optimized structure conforms to the 
+fundamental force characteristics of a through tie-arch bridge, with 
+UHPC allocated to the arch ribs and high-strength steel to the tie-beams 
+and hangers, ensuring each component is suited to its respective force 
+regime.
+By exporting the optimized structure from Abaqus in * .odb file 
+format and incorporating the CAD model into the 3D environment, the 
+design can be further analyzed and evaluated. The rendering shown in 
+Fig. 15 highlights the elegance and practicality of this bridge, demon -
+strating the seamless integration of the novel structural optimization 
+techniques with practical design aesthetics.
+6. Conclusions
+This paper presents a novel evolutionary topology optimization 
+Fig. 13. Optimization of 3D spatial dome: (a) base mesh and its corresponding spatial surface; (b) GS with load and boundary conditions; (c) to (e) single-material 
+result with structural complexity control; and (f) to (h) dual-material result with structural complexity control (units: mm for displacements, MPa for stress).
+Table 4 
+Parametric values of major building materials.
+Materials Modulus of elasticity E 
+(MPa)
+Allowable stress [ σ ] 
+(MPa)
+High-strength steel 
+(Q550)
+2.06 × 10
+5
+500
+UHPC (UC140) 4.43 × 10
+4
+68
+Y. Lai et al.                                                                                                                                                                                                                                      Engineering Structures 324 (2025) 119326 
+14 
+
+Fig. 14. Optimization of the single-span through arch bridge: (a) perspective and elevation of the GS; (b) distribution of nodes and bars in the GS; (c) to (g) GS with 
+boundary conditions under multiple load cases, and corresponding optimized designs (units: mm for dimensions, MPa for stress).
+Fig. 15. Rendering of the optimized single-span through arch bridge.
+Y. Lai et al.                                                                                                                                                                                                                                      Engineering Structures 324 (2025) 119326 
+15 
+
+method, the dual-material truss BESO (DMT-BESO), which optimizes 
+truss structures by simultaneously using two materials with distinct 
+tensile and compressive properties. The following conclusions can be 
+drawn: 
+(1) Practical design considerations for truss topology optimization 
+encompass manufacturability, simplicity, material efficiency, 
+specific constraints, and smooth integration into existing work -
+flows. Achieving a balance between theoretical optimization and 
+practical implementation requires a comprehensive approach.
+(2) A new approach for generating arbitrarily shaped ground struc -
+tures has been developed, utilizing the parametric capabilities of 
+Grasshopper and Rhino. The integration of Abaqus, Grasshopper, 
+and Python facilitates handling complex geometries and solving 
+practical engineering problems.
+(3) By employing the minimum energy principle and full-stress 
+design criterion, the DMT-BESO method achieves topology and 
+size optimization simultaneously, while stress constraints ensure 
+compliance with industry standards, promoting both safety and 
+material efficiency.
+(4) The effectiveness of the DMT-BESO method along with its 
+structural complexity control strategy, has been validated 
+through multiple numerical examples, including the design of a 
+composite material arch bridge, demonstrating its capacity to 
+deliver both efficient and practical truss structures.
+The DMT-BESO method offers a powerful tool for practical truss 
+design, combining theoretical foundations with practical design con -
+siderations. Future in-depth research could focus on incorporate Euler 
+buckling constraints for compressive members in the optimization pro -
+cess, enhancing computational efficiency and extending the application 
+to larger, more complex structural systems.
+CRediT authorship contribution statement
+Yaping Lai: Writing – original draft, Visualization, Supervision, 
+Software, Methodology, Conceptualization. Qi Cai: Validation, 
+Conceptualization. Yu Li: Validation, Conceptualization. Jiayong 
+Chen: Software. Yi Min Xie: Writing – review & editing, Supervision, 
+Methodology, Conceptualization.
+Declaration of Competing Interest
+The authors declare that they have no known competing financial 
+interests or personal relationships that could have appeared to influence 
+the work reported in this paper.
+Acknowledgments
+This project was supported by the Australian Research Council 
+(FL190100014) and the Postdoctoral Fellowship Program of CPSF 
+(GZC20241226). The authors are grateful to the anonymous reviewers 
+whose constructive comments have undoubtedly contributed to an 
+improvement of the overall quality of the manuscript.
+Appendix A. Supporting information
+Supplementary data associated with this article can be found in the 
+online version at doi:10.1016/j.engstruct.2024.119326 .
+Data Availability
+Data will be made available on request. 
+References
+[1] Bendsøe MP, Kikuchi N. Generating optimal topologies in structural design using a 
+homogenization method. Comput Methods Appl Mech Eng 1988;71:197–224. 
+https://doi.org/10.1016/0045-7825(88)90086-2.
+[2] Bendsøe MP, Sigmund O. Material interpolation schemes in topology optimization. 
+Arch Appl Mech Ing Arch 1999;69:635–54. https://doi.org/10.1007/ 
+s004190050248.
+[3] Rietz A. Sufficiency of a finite exponent in SIMP (power law) methods. Struct 
+Multidiscip Optim 2001;21:159–63. https://doi.org/10.1007/s001580050180.
+[4] Andreassen E, Clausen A, Schevenels M, Lazarov BS, Sigmund O. Efficient topology 
+optimization in MATLAB using 88 lines of code. Struct Multidiscip Optim 2011;43: 
+1–16. https://doi.org/10.1007/s00158-010-0594-7.
+[5] Xie YM, Steven GP. A simple evolutionary procedure for structural optimization. 
+Comput Struct 1993;49:885–96. https://doi.org/10.1016/0045-7949(93)90035-C.
+[6] Xie YM, Steven GP. Evolutionary Structural Optimization. Springer; 1997 .
+[7] Huang X, Xie Y-M. A further review of ESO type methods for topology 
+optimization. Struct Multidiscip Optim 2010;41:671–83. https://doi.org/10.1007/ 
+s00158-010-0487-9.
+[8] Wang MY, Wang X, Guo D. A level set method for structural topology optimization. 
+Comput Methods Appl Mech Eng 2003;192:227–46. https://doi.org/10.1016/ 
+S0045-7825(02)00559-5.
+[9] van Dijk NP, Maute K, Langelaar M, van Keulen F. Level-set methods for structural 
+topology optimization: a review. Struct Multidisc Optim 2013;48:437–72. https:// 
+doi.org/10.1007/s00158-013-0912-y.
+[10] Bourdin B, Chambolle A. The Phase-Field Method in Optimal Design. IUTAM Symp. 
+Topol. Des. Optim. Struct. Mach. Mater. Springer,; 2006. p. 207–15 .
+[11] Mukherjee S, Lu D, Raghavan B, Breitkopf P, Dutta S, Xiao M, et al. Accelerating 
+large-scale topology optimization: State-of-the-art and challenges. Arch Comput 
+Methods Eng 2021;28:4549–71. https://doi.org/10.1007/s11831-021-09544-3.
+[12] Das S, Sutradhar A. Multi-physics topology optimization of functionally graded 
+controllable porous structures: Application to heat dissipating problems. Mater Des 
+2020;193:108775. https://doi.org/10.1016/j.matdes.2020.108775.
+[13] Wu J, Sigmund O, Groen JP. Topology optimization of multi-scale structures: a 
+review. Struct Multidiscip Optim 2021;63:1455–80. https://doi.org/10.1007/ 
+s00158-021-02881-8.
+[14] Zhang S, Li H, Huang Y. An improved multi-objective topology optimization model 
+based on SIMP method for continuum structures including self-weight. Struct 
+Multidiscip Optim 2021;63:211–30. https://doi.org/10.1007/s00158-020-02685- 
+2.
+[15] Zheng J, Luo Z, Jiang C, Gao J. Robust topology optimization for concurrent design 
+of dynamic structures under hybrid uncertainties. Mech Syst Signal Process 2019; 
+120:540–59. https://doi.org/10.1016/j.ymssp.2018.10.026.
+[16] Gao K, Do DM, Chu S, Wu G, Kim HA, Featherston CA. Robust topology 
+optimization of structures under uncertain propagation of imprecise stochastic- 
+based uncertain field. Thin-Walled Struct 2022;175:109238. https://doi.org/ 
+10.1016/j.tws.2022.109238.
+[17] Zhu J-H, Zhang W-H, Xia L. Topology optimization in aircraft and aerospace 
+structures design. Arch Comput Methods Eng 2016;23:595–622. https://doi.org/ 
+10.1007/s11831-015-9151-2.
+[18] Munk DJ, Auld DJ, Steven GP, Vio GA. On the benefits of applying topology 
+optimization to structural design of aircraft components. Struct Multidiscip Optim 
+2019;60:1245–66. https://doi.org/10.1007/s00158-019-02250-6.
+[19] Aulig N, Nutwell E, Menzel S, Detwiler D. Preference-based topology optimization 
+for vehicle concept design with concurrent static and crash load cases. Struct 
+Multidiscip Optim 2018;57:251–66. https://doi.org/10.1007/s00158-017-1751-z.
+[20] Sotiropoulos S, Kazakis G, Lagaros ND. Conceptual design of structural systems 
+based on topology optimization and prefabricated components. Comput Struct 
+2020;226:106136. https://doi.org/10.1016/j.compstruc.2019.106136.
+[21] Li Y, Ding J, Zhang Z, Zhou X, Makvandi M, Yuan PF, et al. Practical application of 
+multi-material topology optimization to performance-based architectural design of 
+an iconic building. Compos Struct 2023;325:117603. https://doi.org/10.1016/j. 
+compstruct.2023.117603.
+[22] Lai Y, Li Y, Liu Y, Chen P, Zhao L, Li J, et al. Application of bi-directional 
+evolutionary structural optimization to the design of an innovative pedestrian 
+bridge. AI Civ Eng 2024;3:9. https://doi.org/10.1007/s43503-024-00027-5.
+[23] Yan X, Bao D, Zhou Y, Xie Y, Cui T. Detail control strategies for topology 
+optimization in architectural design and development. Front Arch Res 2022;11: 
+340–56. https://doi.org/10.1016/j.foar.2021.11.001.
+[24] Mizobuti V, Vieira Junior LCM. Bioinspired architectural design based on 
+structural topology optimization. Front Arch Res 2020;9:264–76. https://doi.org/ 
+10.1016/j.foar.2019.12.002.
+[25] Li Y, Lai Y, Lu G, Yan F, Wei P, Xie YM. Innovative design of long-span 
+steel–concrete composite bridge using multi-material topology optimization. Eng 
+Struct 2022;269:114838. https://doi.org/10.1016/j.engstruct.2022.114838.
+[26] Maxwell JC. I. On reciprocal figures, frames, and diagrams of forces. Trans R Soc 
+Edinb 1870;26:1–40. https://doi.org/10.1017/S0080456800026351.
+[27] Cilley FH. The Exact design of statically indeterminate frame works. An exposition 
+of its possibility, but futility. Trans Am Soc Civ Eng 1900;43:353–407. https://doi. 
+org/10.1061/TACEAT.0001397.
+[28] Michell AGM. LVIII. The limits of economy of material in frame-structures. Lond 
+Edinb Dublin Philos Mag J Sci 1904;8:589–97. https://doi.org/10.1080/ 
+14786440409463229.
+[29] Dorn W., Gomory R.E., Grenberg H. Automatic design of optimal structures 1964.
+Y. Lai et al.                                                                                                                                                                                                                                      Engineering Structures 324 (2025) 119326 
+16 
+
+[30] Martínez P, Martí P, Querin OM. Growth method for size, topology, and geometry 
+optimization of truss structures. Struct Multidiscip Optim 2007;33:13–26. https:// 
+doi.org/10.1007/s00158-006-0043-9.
+[31] McKeown JJ. Growing optimal pin-jointed frames. Struct Optim 1998;15:92–100. 
+https://doi.org/10.1007/BF01278495.
+[32] Rule WK. Automatic truss design by optimized growth. J Struct Eng 1994;120: 
+3063–70. https://doi.org/10.1061/(ASCE)0733-9445(1994)120:10(3063).
+[33] He L, Li Q, Gilbert M, Shepherd P, Rankine C, Pritchard T, et al. Optimization- 
+driven conceptual design of truss structures in a parametric modelling 
+environment. Structures 2022;37:469–82. https://doi.org/10.1016/j. 
+istruc.2021.12.048.
+[34] Gilbert M, Tyas A. Layout optimization of large-scale pin-jointed frames. Eng 
+Comput 2003;20:1044–64. https://doi.org/10.1108/02644400310503017.
+[35] Wang Q, Arora JS. Optimization of large-scale truss structures using sparse SAND 
+formulations. Int J Numer Methods Eng 2007;69:390–407 .
+[36] Lu H, Xie YM. Reducing the number of different members in truss layout 
+optimization. Struct Multidiscip Optim 2023;66:52. https://doi.org/10.1007/ 
+s00158-023-03514-y.
+[37] Cai Q, Feng R. Topology optimization of truss structure based on improved bi- 
+directional evolutionary structural optimization method. J Build Struct 2022;43: 
+68–76. https://doi.org/10.14006/j.jzjgxb.2020.0704.
+[38] Cai Q, Feng R, Zhang Z. Topology optimization of trusses incorporating practical 
+local buckling stability considerations. Structures 2022;41:1710–8. https://doi. 
+org/10.1016/j.istruc.2022.05.109.
+[39] Weldeyesus AG, Gondzio J, He L, Gilbert M, Shepherd P, Tyas A. Truss geometry 
+and topology optimization with global stability constraints. Struct Multidiscip 
+Optim 2020;62:1721–37. https://doi.org/10.1007/s00158-020-02634-z.
+[40] Dang KD, Nguyen-Van S, Thai S, Lee S, Luong VH, Lieu QX. A single step 
+optimization method for topology, size and shape of trusses using hybrid 
+differential evolution and symbiotic organisms search. Comput Struct 2022;270: 
+106846. https://doi.org/10.1016/j.compstruc.2022.106846.
+[41] Lieu QX. A novel topology framework for simultaneous topology, size and shape 
+optimization of trusses under static, free vibration and transient behavior. Eng 
+Comput 2022;38:1–25. https://doi.org/10.1007/s00366-022-01599-5.
+[42] Toragay O, Silva DF, Vinel A, Shamsaei N. Exact global optimization of frame 
+structures for additive manufacturing. Struct Multidiscip Optim 2022;65:97. 
+https://doi.org/10.1007/s00158-022-03178-0.
+[43] Zegard T, Paulino GH. GRAND — ground structure based topology optimization for 
+arbitrary 2D domains using MATLAB. Struct Multidiscip Optim 2014;50:861–82. 
+https://doi.org/10.1007/s00158-014-1085-z.
+[44] Zegard T, Paulino GH. GRAND3 — ground structure based topology optimization 
+for arbitrary 3D domains using MATLAB. Struct Multidiscip Optim 2015;52: 
+1161–84. https://doi.org/10.1007/s00158-015-1284-2.
+[45] Huang X, Xie YM. Evolutionary Topology Optimization of Continuum Structures: 
+Methods and Applications. Wiley; 2010 .
+[46] Huang X, Xie YM. Convergent and mesh-independent solutions for the bi- 
+directional evolutionary structural optimization method. Finite Elem Anal Des 
+2007;43:1039–49. https://doi.org/10.1016/j.finel.2007.06.006.
+[47] Xia L, Xia Q, Huang X, Xie YM. Bi-directional evolutionary structural optimization 
+on advanced structures and materials: A comprehensive review. Arch Comput 
+Methods Eng 2018;25:437–78. https://doi.org/10.1007/s11831-016-9203-2.
+[48] Ahrari A, Atai AA. Fully stressed design evolution strategy for shape and size 
+optimization of truss structures. Comput Struct 2013;123:58–67. https://doi.org/ 
+10.1016/j.compstruc.2013.04.013.
+[49] He L, Gilbert M, Song X. A Python script for adaptive layout optimization of 
+trusses. Struct Multidiscip Optim 2019;60:835–47. https://doi.org/10.1007/ 
+s00158-019-02226-6.
+[50] Ministry of Housing and Urban-Rural Development of the People’s Republic of 
+China. Standard for design of steel structures (GB 50017-2017). Beijing: China 
+Architecture & Building Press; 2017 .
+[51] Ministry of Housing and Urban-Rural Development of the People’s Republic of 
+China. Code for design of concrete structures (GB 50010-2010). Beijing: China 
+Architecture & Building Press; 2010 .
+[52] Hemp WS. Michell framework for uniform load between fixed supports. Eng Optim 
+1974;1:61–9. https://doi.org/10.1080/03052157408960577.
+[53] Ministry of Housing and Urban-Rural Development of the People’s Republic of 
+China. Standard for design of high strength steel structure (JGJ/T483-2020). 
+Beijing: China Architecture & Building Press; 2020 .
+[54] China Construction Materials Federation. Specification for design of ultra-high 
+performance concrete structures (T/CCPA 35-2022). Beijing: China Architecture & 
+Building Press; 2022 .
+Y. Lai et al.                                                                                                                                                                                                                                      Engineering Structures 324 (2025) 119326 
+17

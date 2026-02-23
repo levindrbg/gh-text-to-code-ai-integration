@@ -1,6 +1,6 @@
 # GH component: TTC Fetch Executor (geometric_output.json).
 # Input run_id → output run_id (pass-through). Reads geometric_output.json from run_output, parses to GH geometry.
-# Structure follows config/geometric_outline.json: line_elements (start, end, cross_section), support, loads.
+# Schema: line_elements [{start, end, cross_section}], support [[x,z]], loads [[x,z,Fz]].
 #
 # Input  run_id: str (or list with one str from GH wire)
 # Output run_id: str (same as input)
