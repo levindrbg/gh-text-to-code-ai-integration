@@ -60,7 +60,8 @@ def plot_geometric_output(geometric: Dict[str, Any], run_dir: Path) -> None:
             ax.plot(x, z, "o", markersize=6, color="orange")
             scale = 0.3
             if abs(Fz) > 1e-6:
-                ax.arrow(x, z, 0, scale * (1 if Fz < 0 else -1), head_width=0.15, head_length=0.08, fc="orange", ec="orange")
+                # Fz < 0 = downward load (gravity); plot Z is positive up, so arrow dy must be negative to point down
+                ax.arrow(x, z, 0, scale * (-1 if Fz < 0 else 1), head_width=0.15, head_length=0.08, fc="orange", ec="orange")
         ax.grid(True, alpha=0.3)
         ax.set_aspect("equal")
         ax.set_xlabel("X [m]")

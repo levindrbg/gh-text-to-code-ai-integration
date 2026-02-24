@@ -7,6 +7,9 @@
 #   Input  CroSec: str or list — cross-section catalogue. Either a single string with lines like
 #           family:'HEA' name:'HEA100' country:'EU' material:'Steel' applies to elements:''; 
 #           or a list of profile name strings (e.g. ["HEA100","HEA120",...]). Used by Generator to assign one profile per member.
+#   Input  mode:   int — 0 = NEW TRUSS (default), 1 = ITERATION. In ITERATION mode, files from the latest run_output
+#           are loaded and added as context for both interpreter and generator.
+#   Input  api_key: str — Claude API key. Used only if .env does not set ANTHROPIC_API_KEY/CLAUDE_API_KEY.
 #   Input  run:    wire Button — click to run pipeline (only when armed). Runs once per pulse (rising edge).
 #   Input  arm:    bool — True = armed, False = disarmed
 #   Output run_id: str — pass to next component in chain
@@ -119,12 +122,19 @@ try:
     crosec_catalog = _parse_crosec_catalog(CroSec) if CroSec is not None else []
 except NameError:
     crosec_catalog = []  # CroSec input not yet added to component
+try:
+    mode_val = int(mode) if mode is not None else 0
+except (TypeError, ValueError):
+    mode_val = 0
+if mode_val not in (0, 1):
+    mode_val = 0
+api_key_str = str(api_key).strip() if api_key is not None else ""
 
 do_run = armed and run_triggered and bool(prompt_text)
 
 if do_run:
     try:
-        out = run_pipeline(prompt_text, run_id=None, cross_section_catalog=crosec_catalog)
+        out = run_pipeline(prompt_text, run_id=None, cross_section_catalog=crosec_catalog, mode=mode_val, api_key=api_key_str or None)
         run_id = out.get("run_id", "")
     except Exception as e:
         run_id = ""

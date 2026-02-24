@@ -151,6 +151,7 @@ def _load_semantic_outline() -> Dict[str, Any]:
 def parse_prompt_to_structured(
     user_prompt: str,
     run_id: Optional[str] = None,
+    iteration_context: Optional[str] = None,
 ) -> Tuple[Dict[str, Any], str, str]:
     """
     Create full semantic outline of Truss from user prompt.
@@ -158,6 +159,7 @@ def parse_prompt_to_structured(
     - Fetches semantic outline schema from config/semantic_outline.json and system prompt from config/interpreter_system_prompt.md.
     - Asks LLM to fill the form; infers where logical, asks for clarification otherwise.
     - Saves in 03_python/run_output/[run_id]/: semantic_outline.json, communication.txt.
+    - If iteration_context is provided (ITERATION mode), it is prepended so the LLM can refine from the previous run.
 
     Returns:
         (semantic_outline, communication, run_id)
@@ -188,7 +190,20 @@ def parse_prompt_to_structured(
     else:
         raise FileNotFoundError(f"Interpreter system prompt not found: {system_prompt_path}")
 
-    user_message = f"""User prompt about the structure they want:
+    if iteration_context:
+        user_message = f"""CONTEXT FROM PREVIOUS RUN (use this to refine or iterate; user may ask for changes):
+
+{iteration_context}
+
+---
+
+User prompt about the structure they want:
+
+{user_prompt}
+
+Fill the JSON structure. If something is missing or unclear, say so in COMMUNICATION."""
+    else:
+        user_message = f"""User prompt about the structure they want:
 
 {user_prompt}
 
@@ -240,7 +255,8 @@ Fill the JSON structure. If something is missing or unclear, say so in COMMUNICA
         obj_match = re.search(r"\{[\s\S]*\}", structure_raw)
         if obj_match:
             structure_raw = obj_match.group(0)
-        communication = ""
+        # Model returned plain JSON without <COMMUNICATION>; leave a short note so communication.txt is not empty
+        communication = "Structure parsed from JSON. (Interpreter prompt expects <STRUCTURE> and <COMMUNICATION> blocks for user messages.)"
 
     if structure_raw.startswith("```"):
         structure_raw = re.sub(r"^```\w*\n?", "", structure_raw)

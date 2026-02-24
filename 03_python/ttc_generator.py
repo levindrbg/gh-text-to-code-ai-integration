@@ -67,10 +67,12 @@ def generate_geometry_script(
     semantic_outline: Dict[str, Any],
     run_id: str,
     cross_section_catalog: Optional[List[str]] = None,
+    iteration_context: Optional[str] = None,
 ) -> str:
     """
     Generate gen_script via LLM. System = generator_system_prompt + system_outline + catalogue; user = semantic outline.
     Saves gen_script.py in 03_python/run_output/[run_id]/.
+    If iteration_context is provided (ITERATION mode), it is included so the LLM can refine from the previous run.
     Returns the script string.
     """
     API_KEY = os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("CLAUDE_API_KEY")
@@ -79,7 +81,26 @@ def generate_geometry_script(
 
     catalog = cross_section_catalog if cross_section_catalog is not None else []
     system_prompt = _build_system_prompt(semantic_outline, catalog)
-    user_prompt = f"""Generate a Python script that computes the truss geometry and returns geometric output.
+    if iteration_context:
+        user_prompt = f"""CONTEXT FROM PREVIOUS RUN (use this to refine or iterate; preserve or improve on this):
+
+{iteration_context}
+
+---
+
+Generate a Python script that computes the truss geometry and returns geometric output.
+
+Use the semantic outline below as input parameters. Your script must:
+1. Compute node positions and member connectivity (top chord, bottom chord, diagonals).
+2. Define support points and load points.
+3. Call get_geometric_output() and at the end (if __name__ == "__main__"): (a) print the JSON, and (b) save the same JSON to geometric_output.json in the same directory as the script (use os.path.dirname(os.path.abspath(__file__)) and open(..., "w") with json.dump). Both print and save are required.
+
+SEMANTIC OUTLINE:
+{json.dumps(semantic_outline, indent=2)}
+
+Output ONLY executable Python 3 code. No markdown fences, no explanation."""
+    else:
+        user_prompt = f"""Generate a Python script that computes the truss geometry and returns geometric output.
 
 Use the semantic outline below as input parameters. Your script must:
 1. Compute node positions and member connectivity (top chord, bottom chord, diagonals).

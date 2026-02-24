@@ -2,11 +2,11 @@
   "computation_process": {
     "description": "Mandatory sequence for the generated script (04_knowledge base).",
     "steps": [
-      {"id": "node_position", "description": "Nodes, members, support_nodes from topology ([0, num_bays]). If BESO: chord_indices, web_indices. Load nodes/values (tributary, top chord)."},
+      {"id": "node_position", "description": "Nodes, members, support_nodes from topology ([0, num_bays]). Build full member list for all bays (first to last); do not omit end members — truss must be closed. If BESO: chord_indices, web_indices. Load nodes/values (tributary, top chord)."},
       {"id": "typology_member_optimization", "description": "BESO: chord protection, only webs removable. Else: discrete profile per member. Stress + slenderness + buckling."},
       {"id": "load_calculation_cross_section", "description": "Load vector (G, Q, ULS). FEA: K, BCs, solve, strains/stresses. Halt on LinAlgError. Profile or area update."},
       {"id": "iteration", "description": "Init areas. Loop: FEA → update areas. Final FEA, then output."},
-      {"id": "output", "description": "Build geometric_output dict. MUST write geometric_output.json in script directory (and print). Filter min area."}
+      {"id": "output", "description": "Build geometric_output dict. MUST write geometric_output.json in script directory (and print). Include every member in line_elements (all bays, both ends); only filter by min area. No missing end members."}
     ],
     "beso_chord_protection": "Only web members removable; chords resized, not removed. chord_indices, web_indices from geometry.",
     "fea_singular_handling": "On LinAlgError: halt loop, log, do not crash."
@@ -18,9 +18,17 @@
     "path_rule": "Script dir = os.path.dirname(os.path.abspath(__file__)); write file there. Mandatory.",
     "schema": {
       "description": "2D truss [x, z], m, kN. Pinned supports.",
-      "line_elements": "[ { start: [x,z], end: [x,z], cross_section: profile_name } ]",
+      "line_elements": "[ { start: [x,z], end: [x,z], cross_section: profile_name } ]. Include every member (all bays, both ends); only exclude if below min area. No missing end members — structure must be closed.",
       "support": "[ [x,z], ... ]",
       "loads": "[ [x,z,Fz], ... ] ULS point loads at top chord."
+    }
+  },
+
+  "analysis_output": {
+    "description": "Saved by GH component ttc_gh_save_analysis to run_output/[run_id]/ for feedback loop.",
+    "output_file": "analysis_output.json",
+    "schema": {
+      "line_elements": "[ { start: [x,z], end: [x,z], cross_section, utilization, displacement_start: [dx,dz], displacement_end: [dx,dz], axial_stress } ]. One entry per member; attributes per member for iteration."
     }
   },
 
