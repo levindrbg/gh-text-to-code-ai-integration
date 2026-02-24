@@ -40,6 +40,41 @@ def _read_run_file(run_dir: Path, filename: str) -> str:
         return ""
 
 
+def _load_iteration_context(run_id: str) -> str:
+    """
+    Load run_output files for run_id into a single context string for the LLM.
+    Used in ITERATION mode to give the agent the previous run's outputs.
+    """
+    rid = (run_id or "").strip()
+    if not rid:
+        return ""
+    run_dir = _run_output_dir() / rid
+    if not run_dir.exists():
+        return ""
+    parts = [f"# Context from previous run: {rid}\n"]
+    for name, label in [
+        ("semantic_outline.json", "Semantic outline"),
+        ("communication.txt", "Communication"),
+        ("run_commentary.txt", "Run commentary"),
+        ("geometric_output.json", "Geometric output"),
+        ("analysis_output.json", "Analysis output"),
+        ("gen_script.py", "Generated script"),
+    ]:
+        path = run_dir / name
+        if not path.exists():
+            continue
+        try:
+            if path.suffix == ".json":
+                with open(path, encoding="utf-8") as f:
+                    content = json.dumps(json.load(f), indent=2)
+            else:
+                content = path.read_text(encoding="utf-8")
+        except Exception:
+            content = "(read error)"
+        parts.append(f"\n## {label}\n```\n{content.strip()}\n```\n")
+    return "\n".join(parts).strip()
+
+
 def load_run_outputs(run_id: str) -> tuple:
     """
     Load communication and run_commentary for run_id from run_output/[run_id]/.
@@ -72,6 +107,8 @@ def run(
     prompt: str,
     run_id: Optional[str] = None,
     cross_section_catalog: Optional[list] = None,
+    mode: int = 0,
+    api_key: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Run the full pipeline: interpret → generate → execute.
@@ -83,10 +120,20 @@ def run(
         run_id: Optional. If None, a new run_id is created here and used for the whole process.
         cross_section_catalog: Optional list of profile name strings (e.g. ["HEA100", "HEA120", ...])
             for the generator to assign to members. Passed from GH "CroSec" input when provided.
+        mode: 0 = NEW TRUSS (default), 1 = ITERATION. In ITERATION mode, files from the latest
+            run_output folder are loaded and added as context for both interpreter and generator.
+        api_key: Optional Claude/Anthropic API key. Used only if .env does not already set
+            ANTHROPIC_API_KEY or CLAUDE_API_KEY (e.g. when running from Grasshopper without .env).
 
     Returns:
         Dict with: communication, run_id, structure, script_str, geometric_output, error, run_commentary.
     """
+    # Use .env key if present; otherwise use api_key from caller (e.g. Grasshopper input)
+    if not (os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("CLAUDE_API_KEY")):
+        key = (api_key or "").strip()
+        if key:
+            os.environ["ANTHROPIC_API_KEY"] = key
+
     result: Dict[str, Any] = {
         "communication": "",
         "run_id": "",
@@ -99,6 +146,16 @@ def run(
     log: list = []
 
     try:
+        # In ITERATION mode, load context from the latest run (before we create the new run_id)
+        iteration_context = ""
+        if mode == 1:
+            previous_rid = get_latest_run_id()
+            if previous_rid:
+                iteration_context = _load_iteration_context(previous_rid)
+                log.append(f"[mode] ITERATION — context from {previous_rid}")
+            else:
+                log.append("[mode] ITERATION — no previous run found, proceeding without context")
+
         # Create run_id once and use it for the whole pipeline
         rid = run_id if run_id is not None else create_run_id()
         result["run_id"] = rid
@@ -106,7 +163,9 @@ def run(
 
         # 1. Interpreter: semantic outline → run_output/[run_id]/
         log.append("Interpreting prompt → semantic outline...")
-        semantic_outline, communication, _ = parse_prompt_to_structured(prompt.strip(), run_id=rid)
+        semantic_outline, communication, _ = parse_prompt_to_structured(
+            prompt.strip(), run_id=rid, iteration_context=iteration_context or None
+        )
         result["communication"] = communication
         result["structure"] = semantic_outline
         log.append("Saved run_output/{}/semantic_outline.json, communication.txt".format(rid))
@@ -114,7 +173,9 @@ def run(
         # 2. Generator: gen_script.py → run_output/[run_id]/
         log.append("Generating gen_script.py...")
         catalog = cross_section_catalog if cross_section_catalog is not None else []
-        script_str = generate_geometry_script(semantic_outline, run_id=rid, cross_section_catalog=catalog)
+        script_str = generate_geometry_script(
+            semantic_outline, run_id=rid, cross_section_catalog=catalog, iteration_context=iteration_context or None
+        )
         result["script_str"] = script_str
         log.append("Saved run_output/{}/gen_script.py".format(rid))
 
