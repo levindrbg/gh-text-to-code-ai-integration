@@ -1,8 +1,9 @@
 """
-TTC Generator — Create gen_script.py (generated script for truss geometry).
+TTC Generator — Generate Python script for truss geometry from semantic outline.
 
-- Loads generator_system_prompt.md and system_outline.json from config. Semantic outline + catalogue at runtime.
-- LLM returns script; scrape and save as gen_script.py in 03_python/run_output/[run_id]/.
+Loads generator_system_prompt.md and system_outline.json from config; passes semantic outline
+and optional cross-section catalogue to the LLM. Writes the returned script as
+gen_script.py in run_output/[run_id]/.
 """
 
 import os

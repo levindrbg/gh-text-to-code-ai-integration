@@ -1,9 +1,12 @@
-# GHPython Component: Display Truss Plot Image
-# --------------------------------------------
-# Repo: 03_python/run_output/{run_id}/truss_plot.png
-#
-# Inputs:  run_id (str), show (bool)
-# Outputs: status (str), resolved_path (str)
+"""
+GHPython component: Display Truss Plot Image
+
+Shows the pipeline-generated truss plot (run_output/[run_id]/truss_plot.png) as an overlay in the Rhino viewport.
+Toggle show to display or hide the image.
+
+Inputs:  run_id (str), show (bool)
+Outputs: status (str), resolved_path (str)
+"""
 
 import os
 import clr
@@ -13,21 +16,21 @@ import Rhino
 import Rhino.Display as RD
 import Rhino.Geometry as RG
 import scriptcontext as sc
+from pathlib import Path
 
 IMG_WIDTH = 600
 MARGIN_LEFT = 10
 MARGIN_TOP = 10
 CONDUIT_KEY = "ttc_truss_plot_conduit"
 
-# ---- Repo root (same as other gh_python scripts) ----
-REPO_ROOT = r"C:\Users\levin\Documents\GitHub\gh-text-to-code-ai-integration"
-if not os.path.isdir(os.path.join(REPO_ROOT, "03_python")):
-    from pathlib import Path
-    _cwd = Path(os.getcwd()).resolve()
-    if (_cwd / "03_python").is_dir():
-        REPO_ROOT = str(_cwd)
-    elif _cwd.name == "02_grasshopper" and (_cwd.parent / "03_python").is_dir():
-        REPO_ROOT = str(_cwd.parent)
+# Resolve repo root from cwd (repo root or 02_grasshopper when GH runs)
+_cwd = Path(os.getcwd()).resolve()
+if (_cwd / "03_python").is_dir():
+    REPO_ROOT = str(_cwd)
+elif _cwd.name == "02_grasshopper" and (_cwd.parent / "03_python").is_dir():
+    REPO_ROOT = str(_cwd.parent)
+else:
+    REPO_ROOT = str(_cwd)
 
 # ---- Normalize run_id (can be list from GH wire) ----
 if run_id is not None and hasattr(run_id, "__getitem__") and not isinstance(run_id, str):

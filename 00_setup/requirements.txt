@@ -1,5 +1,11 @@
+# Pipeline and Grasshopper (load .env, plot truss in executor)
+python-dotenv>=1.0
+matplotlib>=3.7
+
+# Optional: knowledge-base PDF extraction (04_knowledge base/extract_to_txt.py)
+pypdf>=4.0
+
 # Local dev and tests (Rhino 8 has numpy/scipy in its CPython env)
 numpy>=1.24
 scipy>=1.10
-python-dotenv>=1.0
 pytest>=7.0

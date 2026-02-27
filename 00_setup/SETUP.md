@@ -2,54 +2,41 @@
 
 ## 1. Folder structure
 
-- `00_setup/` — `.env.example`, `requirements.txt`, `SETUP.md`
+- `00_setup/` — `setup.sh`, `requirements.txt`, `SETUP.md`; you create `.env` here (see step 3)
 - `01_docs/` — PDF and goals (gitignored)
 - `02_grasshopper/` — Grasshopper workflows; GH Python components call `03_python` scripts
 - `03_python/` — all Python scripts called from GH: config, schemas, tests, optimization
-- `04_gh_python/` — scripts to copy into GHPython components
-- `05_knowledge_base/` — data for Pinecone vector space (gitignored)
+- GH Python scripts live in `02_grasshopper/gh_python/` — copy-paste into GHPython components
 
-## 2. Virtual environment (venv)
+## 2. Virtual environment and dependencies
 
-From repo root:
+From repo root, run the setup script (creates `venv/` and installs from `requirements.txt`):
 
-```powershell
-python -m venv venv
-.\venv\Scripts\Activate.ps1
-pip install -r 00_setup\requirements.txt
+```bash
+bash 00_setup/setup.sh
 ```
 
-(On Windows CMD: `venv\Scripts\activate.bat`.)
+Then activate the venv when you need it:
 
-## 3. API keys (.env) and config
+- **Linux / macOS / Git Bash:** `source venv/bin/activate`
+- **Windows PowerShell:** `.\venv\Scripts\Activate.ps1`
+- **Windows CMD:** `venv\Scripts\activate.bat`
 
-1. Copy the example env file to the repo root as `.env`:
+## 3. API keys (.env)
 
-   ```powershell
-   copy 00_setup\.env.example .env
-   ```
+Either load the Anthropic (Cluade) api key through `.env` from **`00_setup/.env`** or directly in the Grasshopper script.
 
-2. Edit `.env` and set:
-   - `ANTHROPIC_API_KEY` (or `CLAUDE_API_KEY`) — this project uses Claude only, no OpenAI
-   - `PINECONE_API_KEY` and `PINECONE_INDEX_HOST` (when you use RAG)
-
-3. Copy the config template so GH and tests can load `.env`:
-
-   ```powershell
-   copy 03_python\config\settings.example.py 03_python\config\settings.py
-   ```
-
-`.env` and `03_python/config/settings.py` are gitignored. Do not commit them.
-
-## 4. Cursor rules
-
-Project rules for Cursor live in **`.cursorrules`** at the repo root. Cursor picks that file automatically. The full spec (architecture, patterns, schema) is there.
+Example for .env:
+==============================================
+CLAUDE_API_KEY = [Api Key here]
+==============================================
 
 ## 5. Running scripts in Grasshopper
 
 - Use **Rhino 8** with **CPython 3** in the GHPython component.
-- In each component, use the loader pattern from `.cursorrules`: set `REPO_ROOT` to this repo, then `exec(open(script_path).read(), ctx)`.
-- Scripts live in `03_python/`; edit in your IDE, save, then Recompute in GH — no restart needed.
+- Open **`02_grasshopper/TTC_Workflow_V4.gh`** and paste the scripts from `02_grasshopper/gh_python/` into each GHPython component (see that folder’s README for the component chain and wiring).
+- Open the .gh file from the repo so the current working directory is the repo root or `02_grasshopper`.
+- Pipeline code lives in `03_python/`; the GH scripts add the repo to `sys.path` and call it. Edit scripts in your IDE, save, then Recompute in GH.
 
 ## Is `exec()` slow or unstable?
 

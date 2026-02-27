@@ -1,14 +1,12 @@
 # Environment and secrets
 .env
 venv/
-03_python/config/settings.py
+.cursorrules
 
 # Local docs (PDF, personal goals) — keep out of version control
 01_docs/
-
 # Knowledge base data for Pinecone vector space (not needed for scripting)
-05_knowledge_base/
-
+04_knowledge_base/
 # Runtime outputs (all go under run_output; do not create prompt/ or schemas/ at root)
 03_python/run_output/*
 !03_python/run_output/.gitkeep
