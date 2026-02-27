@@ -1,6 +1,7 @@
 """
-TTC HTTP — Retry wrapper for Anthropic API calls.
-Handles 529 (overloaded) and 5xx by retrying with backoff.
+TTC HTTP — Retry wrapper for Anthropic API requests.
+
+Retries on 529 (overloaded) and 5xx with exponential backoff (2s, 4s, 8s).
 """
 
 import time

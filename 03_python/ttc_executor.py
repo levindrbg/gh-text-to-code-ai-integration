@@ -1,10 +1,8 @@
 """
-TTC Executor — Load, validate, and execute gen_script.py for a run.
+TTC Executor — Load, validate, and run gen_script.py for a given run_id.
 
-- Loads gen_script.py from 03_python/run_output/[run_id]/.
-- Validates script (syntax check).
-- Executes the script in that run directory so it can write geometric_output.json there.
-- Grasshopper (or other clients) read geometric_output.json separately.
+Reads gen_script.py from run_output/[run_id]/, checks syntax, executes it in that directory
+so it writes geometric_output.json there, and optionally generates truss_plot.png.
 """
 
 import ast

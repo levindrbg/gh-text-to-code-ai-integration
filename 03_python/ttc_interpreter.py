@@ -1,9 +1,9 @@
 """
-TTC Interpreter — Create full semantic outline of Truss from user prompt.
+TTC Interpreter — Build semantic outline of truss from natural-language prompt.
 
-- Fetches semantic outline schema from config/semantic_outline.json and system prompt from config/interpreter_system_prompt.md.
-- Calls LLM to fill the form from the user prompt.
-- Saves semantic outline and communication in 03_python/run_output/[run_id]/.
+Loads schema (config/semantic_outline.json) and system prompt (config/interpreter_system_prompt.md),
+calls the LLM to fill the structure, and writes semantic_outline.json and communication.txt
+to run_output/[run_id]/.
 """
 
 import os

@@ -1,9 +1,11 @@
 """
-Extract text from all .docx and .pdf in 04_knowledge base and write .txt files.
-Run from repo root: python "04_knowledge base/extract_to_txt.py"
+Extract text from .docx and .pdf in this folder into extracted_txt/ as .txt files.
+
+Optional utility for the knowledge base: run from repo root:
+  python "04_knowledge base/extract_to_txt.py"
 
 - .docx: uses stdlib only (zipfile + xml.etree).
-- .pdf: requires pypdf (pip install pypdf). Skips PDFs if not installed.
+- .pdf: requires pypdf (pip install pypdf); skips PDFs if not installed.
 """
 
 import os

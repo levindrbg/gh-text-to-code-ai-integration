@@ -1,12 +1,13 @@
 """
-Single pipeline: Interpreter → Generator → Executor.
+TTC (Text-to-Code) pipeline: Interpreter → Generator → Executor.
 
-run_id is created in this script and passed through the whole process.
-All filled-out data is saved under run_output/[run_id]/.
+Orchestrates the full workflow: natural-language prompt → semantic outline → generated
+Python script → geometric output. run_id is created here and passed through; all outputs
+are saved under run_output/[run_id]/.
 
-- Interpreter: semantic outline, communication → run_output/[run_id]/
-- Generator: gen_script.py → run_output/[run_id]/
-- Executor: runs gen_script, result saved as geometric_output.json → run_output/[run_id]/
+- Interpreter: prompt → semantic_outline.json, communication.txt
+- Generator: semantic outline → gen_script.py
+- Executor: runs gen_script.py → geometric_output.json, truss_plot.png
 """
 
 import json

@@ -1,21 +1,25 @@
-# GH component: TTC Save Analysis
-# Saves per-member analysis to run_output/[run_id]/analysis_output.json for the feedback loop.
-# Input run_id + line_elements (base) + attribute lists → writes JSON, outputs run_id (pass-through).
-#
-# Input  run_id: str (or list with one str from GH wire)
-# Input  Line_Elements: list of Rhino.Geometry.Line (or list of dicts {start, end, cross_section})
-# Input  CroSec: list of str, cross_section name per member (same order as Line_Elements)
-# Input  Utilization: list of float, one per member
-# Input  Displacement_Start: list of [dx, dz] or Point3d/Vector3d, displacement at start of member
-# Input  Displacement_End: list of [dx, dz] or Point3d/Vector3d, displacement at end of member
-# Input  Axial_Stress: list of float, axial stress per member (e.g. MPa)
-# Output run_id: str (same as input)
-# Output status: str
+"""
+GHPython component: TTC Save Analysis
+
+Saves per-member analysis to run_output/[run_id]/analysis_output.json for the feedback loop.
+Use after structural analysis: pass run_id, Line_Elements, CroSec, and analysis attribute lists.
+
+Inputs:  run_id, Line_Elements, CroSec, Utilization, Displacement_Start, Displacement_End, Axial_Stress
+Outputs: run_id (pass-through), status (str)
+"""
 
 import json
 import os
+from pathlib import Path
 
-REPO_ROOT = r"C:\Users\levin\Documents\GitHub\gh-text-to-code-ai-integration"
+# Resolve repo root from cwd (repo root or 02_grasshopper when GH runs)
+_cwd = Path(os.getcwd()).resolve()
+if (_cwd / "03_python").is_dir():
+    REPO_ROOT = str(_cwd)
+elif _cwd.name == "02_grasshopper" and (_cwd.parent / "03_python").is_dir():
+    REPO_ROOT = str(_cwd.parent)
+else:
+    REPO_ROOT = str(_cwd)
 RUN_OUTPUT_DIR = os.path.join(REPO_ROOT, "03_python", "run_output")
 
 try:

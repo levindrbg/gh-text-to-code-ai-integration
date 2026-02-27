@@ -1,18 +1,12 @@
-# GH component: TTC Run Pipeline
-# Copy-paste into a GHPython component. Runs only when Run is clicked (armed + button + prompt).
-# Output run_id connects to the next component in the chain (e.g. TTC Fetch Interpreter Returns).
-#
-# GHPython (CPython 3, Rhino 8):
-#   Input  prompt: str — user prompt (e.g. "gable truss 12 m span, steel")
-#   Input  CroSec: str or list — cross-section catalogue. Either a single string with lines like
-#           family:'HEA' name:'HEA100' country:'EU' material:'Steel' applies to elements:''; 
-#           or a list of profile name strings (e.g. ["HEA100","HEA120",...]). Used by Generator to assign one profile per member.
-#   Input  mode:   int — 0 = NEW TRUSS (default), 1 = ITERATION. In ITERATION mode, files from the latest run_output
-#           are loaded and added as context for both interpreter and generator.
-#   Input  api_key: str — Claude API key. Used only if .env does not set ANTHROPIC_API_KEY/CLAUDE_API_KEY.
-#   Input  run:    wire Button — click to run pipeline (only when armed). Runs once per pulse (rising edge).
-#   Input  arm:    bool — True = armed, False = disarmed
-#   Output run_id: str — pass to next component in chain
+"""
+GHPython component: TTC Run Pipeline
+
+Runs the full TTC pipeline (Interpreter → Generator → Executor) when Run is clicked (armed + button + prompt).
+Creates run_id and writes all outputs to run_output/[run_id]/.
+
+Inputs:  prompt (str), CroSec (optional), mode (0=NEW TRUSS, 1=ITERATION), api_key (optional), run (Button), arm (bool)
+Outputs: run_id (str) — pass to next component in chain
+"""
 
 import os
 import re
@@ -45,12 +39,10 @@ def _parse_crosec_catalog(crosec_input):
     if crosec_input is None:
         return []
     if hasattr(crosec_input, "__iter__") and not isinstance(crosec_input, str):
-        # List of items from GH (e.g. list of strings)
         try:
             items = list(crosec_input)
             if not items:
                 return []
-            # If first item looks like "family:'HEA' name:'HEA100' ...", parse each
             first = str(items[0])
             if "name:'" in first or 'name:"' in first:
                 names = []
@@ -60,7 +52,6 @@ def _parse_crosec_catalog(crosec_input):
                     if m:
                         names.append(m.group(1))
                 return names
-            # Otherwise treat as list of profile names
             return [str(x).strip() for x in items if str(x).strip()]
         except (TypeError, IndexError):
             return []
@@ -77,13 +68,14 @@ def _parse_crosec_catalog(crosec_input):
             names.append(m.group(1))
     return names
 
-REPO_ROOT = r"C:\Users\levin\Documents\GitHub\gh-text-to-code-ai-integration"
-if not os.path.isdir(os.path.join(REPO_ROOT, "03_python")):
-    _cwd = Path(os.getcwd()).resolve()
-    if (_cwd / "03_python").is_dir():
-        REPO_ROOT = str(_cwd)
-    elif _cwd.name == "02_grasshopper" and (_cwd.parent / "03_python").is_dir():
-        REPO_ROOT = str(_cwd.parent)
+# Resolve repo root from cwd (repo root or 02_grasshopper when GH runs)
+_cwd = Path(os.getcwd()).resolve()
+if (_cwd / "03_python").is_dir():
+    REPO_ROOT = str(_cwd)
+elif _cwd.name == "02_grasshopper" and (_cwd.parent / "03_python").is_dir():
+    REPO_ROOT = str(_cwd.parent)
+else:
+    REPO_ROOT = str(_cwd)
 
 # Rising-edge state file (run only once per button click)
 _TTC_RUN_STATE_FILE = Path(REPO_ROOT) / ".ttc_gh_run_prev"
