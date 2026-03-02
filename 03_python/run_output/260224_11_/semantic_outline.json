@@ -1,0 +1,34 @@
+{
+  "geometry_roof": {
+    "span_x_m": 30,
+    "length_y_m": 15
+  },
+  "geometry_truss": {
+    "typology": "bowstring",
+    "span_m": 30,
+    "num_bays": 12,
+    "support_positions": [
+      [
+        0,
+        0
+      ],
+      [
+        30,
+        0
+      ]
+    ]
+  },
+  "loads": {
+    "snow_kN_per_m2": 4.5,
+    "snow_source": "standard_assumed",
+    "wind_pressure_kN_per_m2": 0.8,
+    "wind_suction_kN_per_m2": 0.3,
+    "wind_source": "standard_assumed",
+    "roof_cladding_kN_per_m2": 8.0,
+    "cladding_source": "user_defined"
+  },
+  "optimization_flags": {
+    "member_sizing": true
+  },
+  "notes": "Modified from previous run to reduce utilization: increased num_bays from 10 to 12 (shorter member lengths reduce buckling), reduced roof_cladding from 10.0 to 8.0 kN/m\u00b2 (lighter roof system). Previous analysis showed severe over-utilization (up to 47x capacity) in web members, indicating need for structural modifications."
+}

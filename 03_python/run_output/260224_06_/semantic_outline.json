@@ -1,0 +1,31 @@
+{
+  "geometry_roof": {
+    "span_x_m": 15,
+    "length_y_m": 30,
+    "truss_spacing_m": 6.0
+  },
+  "geometry_truss": {
+    "typology": "warren",
+    "span_m": 15,
+    "support_positions": [
+      [
+        0,
+        0
+      ],
+      [
+        15,
+        0
+      ]
+    ]
+  },
+  "loads": {
+    "snow_kN_per_m2": 4.5,
+    "snow_source": "standard_assumed",
+    "wind_pressure_kN_per_m2": 0.8,
+    "wind_suction_kN_per_m2": 0.3,
+    "wind_source": "standard_assumed",
+    "roof_cladding_kN_per_m2": 10.0,
+    "cladding_source": "user_defined"
+  },
+  "notes": "User specified flat truss with crossing diagonals - interpreted as warren typology. Roof weight 10 kN/m\u00b2 applied as cladding load. Truss spacing estimated at 6m (30m length / 5 trusses) for reasonable tributary width. Height omitted - Generator will determine from span and flat truss requirements."
+}

@@ -1,0 +1,425 @@
+{
+  "description": "Member analysis for feedback loop (per-member attributes)",
+  "line_elements": [
+    {
+      "start": [
+        0.0,
+        0.0
+      ],
+      "end": [
+        0.0,
+        0.0
+      ],
+      "cross_section": "HEA200",
+      "utilization": 0.36512449373235684,
+      "displacement_start": [
+        0.0,
+        0.0
+      ],
+      "displacement_end": [
+        0.0,
+        0.0
+      ],
+      "axial_stress": -345.81997355169506
+    },
+    {
+      "start": [
+        0.0,
+        0.0
+      ],
+      "end": [
+        0.0,
+        0.0
+      ],
+      "cross_section": "HEA200",
+      "utilization": 0.32627612872561623,
+      "displacement_start": [
+        0.0,
+        0.0
+      ],
+      "displacement_end": [
+        0.0,
+        0.0
+      ],
+      "axial_stress": -309.0255629060882
+    },
+    {
+      "start": [
+        0.0,
+        0.0
+      ],
+      "end": [
+        0.0,
+        0.0
+      ],
+      "cross_section": "HEA200",
+      "utilization": 0.27606687878281355,
+      "displacement_start": [
+        0.0,
+        0.0
+      ],
+      "displacement_end": [
+        0.0,
+        0.0
+      ],
+      "axial_stress": 349.225981994653
+    },
+    {
+      "start": [
+        0.0,
+        0.0
+      ],
+      "end": [
+        0.0,
+        0.0
+      ],
+      "cross_section": "HEA200",
+      "utilization": 0.3442509349174176,
+      "displacement_start": [
+        0.0,
+        0.0
+      ],
+      "displacement_end": [
+        0.0,
+        0.0
+      ],
+      "axial_stress": 435.4791539252078
+    },
+    {
+      "start": [
+        0.0,
+        0.0
+      ],
+      "end": [
+        0.0,
+        0.0
+      ],
+      "cross_section": "HEA200",
+      "utilization": 0.06917539890752963,
+      "displacement_start": [
+        0.0,
+        0.0
+      ],
+      "displacement_end": [
+        0.0,
+        0.0
+      ],
+      "axial_stress": -64.92979973103878
+    },
+    {
+      "start": [
+        0.0,
+        0.0
+      ],
+      "end": [
+        0.0,
+        0.0
+      ],
+      "cross_section": "HEA200",
+      "utilization": 0.06909125529305632,
+      "displacement_start": [
+        0.0,
+        0.0
+      ],
+      "displacement_end": [
+        0.0,
+        0.0
+      ],
+      "axial_stress": -64.92979973103878
+    },
+    {
+      "start": [
+        0.0,
+        0.0
+      ],
+      "end": [
+        0.0,
+        0.0
+      ],
+      "cross_section": "HEA200",
+      "utilization": 1.2748437915789068,
+      "displacement_start": [
+        0.0,
+        0.0
+      ],
+      "displacement_end": [
+        0.0,
+        0.0
+      ],
+      "axial_stress": -1207.4414449158364
+    },
+    {
+      "start": [
+        0.0,
+        0.0
+      ],
+      "end": [
+        0.0,
+        0.0
+      ],
+      "cross_section": "HEA200",
+      "utilization": 1.358431406796109,
+      "displacement_start": [
+        0.0,
+        0.0
+      ],
+      "displacement_end": [
+        0.0,
+        0.0
+      ],
+      "axial_stress": -1286.6096940469147
+    },
+    {
+      "start": [
+        0.0,
+        0.0
+      ],
+      "end": [
+        0.0,
+        0.0
+      ],
+      "cross_section": "HEA200",
+      "utilization": 1.0024485953637736,
+      "displacement_start": [
+        0.0,
+        0.0
+      ],
+      "displacement_end": [
+        0.0,
+        0.0
+      ],
+      "axial_stress": -1102.6992333975488
+    },
+    {
+      "start": [
+        0.0,
+        0.0
+      ],
+      "end": [
+        0.0,
+        0.0
+      ],
+      "cross_section": "HEA200",
+      "utilization": 0.7586525773047097,
+      "displacement_start": [
+        0.0,
+        0.0
+      ],
+      "displacement_end": [
+        0.0,
+        0.0
+      ],
+      "axial_stress": -872.4539123212219
+    },
+    {
+      "start": [
+        0.0,
+        0.0
+      ],
+      "end": [
+        0.0,
+        0.0
+      ],
+      "cross_section": "HEA200",
+      "utilization": 0.8790007084390814,
+      "displacement_start": [
+        0.0,
+        0.0
+      ],
+      "displacement_end": [
+        0.0,
+        0.0
+      ],
+      "axial_stress": -758.3755149292576
+    },
+    {
+      "start": [
+        0.0,
+        0.0
+      ],
+      "end": [
+        0.0,
+        0.0
+      ],
+      "cross_section": "HEA200",
+      "utilization": 0.062171543208325505,
+      "displacement_start": [
+        0.0,
+        0.0
+      ],
+      "displacement_end": [
+        0.0,
+        0.0
+      ],
+      "axial_stress": -64.73149839650799
+    },
+    {
+      "start": [
+        0.0,
+        0.0
+      ],
+      "end": [
+        0.0,
+        0.0
+      ],
+      "cross_section": "HEA200",
+      "utilization": 0.31322291151974824,
+      "displacement_start": [
+        0.0,
+        0.0
+      ],
+      "displacement_end": [
+        0.0,
+        0.0
+      ],
+      "axial_stress": -327.22499198778695
+    },
+    {
+      "start": [
+        0.0,
+        0.0
+      ],
+      "end": [
+        0.0,
+        0.0
+      ],
+      "cross_section": "HEA200",
+      "utilization": 0.07091083579580307,
+      "displacement_start": [
+        0.0,
+        0.0
+      ],
+      "displacement_end": [
+        0.0,
+        0.0
+      ],
+      "axial_stress": -74.90818115115216
+    },
+    {
+      "start": [
+        0.0,
+        0.0
+      ],
+      "end": [
+        0.0,
+        0.0
+      ],
+      "cross_section": "HEA200",
+      "utilization": 0.0960601858835637,
+      "displacement_start": [
+        0.0,
+        0.0
+      ],
+      "displacement_end": [
+        0.0,
+        0.0
+      ],
+      "axial_stress": 120.75599754363749
+    },
+    {
+      "start": [
+        0.0,
+        0.0
+      ],
+      "end": [
+        0.0,
+        0.0
+      ],
+      "cross_section": "HEA200",
+      "utilization": 0.8353360688948632,
+      "displacement_start": [
+        0.0,
+        0.0
+      ],
+      "displacement_end": [
+        0.0,
+        0.0
+      ],
+      "axial_stress": -960.6402762112239
+    },
+    {
+      "start": [
+        0.0,
+        0.0
+      ],
+      "end": [
+        0.0,
+        0.0
+      ],
+      "cross_section": "HEA200",
+      "utilization": 0.5606249340129824,
+      "displacement_start": [
+        0.0,
+        0.0
+      ],
+      "displacement_end": [
+        0.0,
+        0.0
+      ],
+      "axial_stress": 709.1933446510927
+    },
+    {
+      "start": [
+        0.0,
+        0.0
+      ],
+      "end": [
+        0.0,
+        0.0
+      ],
+      "cross_section": "HEA200",
+      "utilization": 0.3877684828708124,
+      "displacement_start": [
+        0.0,
+        0.0
+      ],
+      "displacement_end": [
+        0.0,
+        0.0
+      ],
+      "axial_stress": -335.3156643830712
+    },
+    {
+      "start": [
+        0.0,
+        0.0
+      ],
+      "end": [
+        0.0,
+        0.0
+      ],
+      "cross_section": "HEA200",
+      "utilization": 0.0,
+      "displacement_start": [
+        0.0,
+        0.0
+      ],
+      "displacement_end": [
+        0.0,
+        0.0
+      ],
+      "axial_stress": 0.0
+    },
+    {
+      "start": [
+        0.0,
+        0.0
+      ],
+      "end": [
+        0.0,
+        0.0
+      ],
+      "cross_section": "HEA200",
+      "utilization": 0.0,
+      "displacement_start": [
+        0.0,
+        0.0
+      ],
+      "displacement_end": [
+        0.0,
+        0.0
+      ],
+      "axial_stress": 0.0
+    }
+  ]
+}

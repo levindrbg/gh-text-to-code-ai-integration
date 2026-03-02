@@ -1,0 +1,1 @@
+I understand you want to fix the bowstring truss by adding the missing top chord connections at the ends and including diagonal members. The previous design had gaps in the top chord near the supports. The Generator will now create a complete bowstring with full top chord connectivity from support to support and add diagonal bracing for improved structural performance.

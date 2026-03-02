@@ -1,0 +1,35 @@
+{
+  "geometry_roof": {
+    "span_x_m": 15,
+    "length_y_m": 30
+  },
+  "geometry_truss": {
+    "typology": "bowstring",
+    "span_m": 15,
+    "num_bays": 10,
+    "support_positions": [
+      [
+        0,
+        0
+      ],
+      [
+        15,
+        0
+      ]
+    ]
+  },
+  "loads": {
+    "snow_kN_per_m2": 4.5,
+    "snow_source": "standard_assumed",
+    "wind_pressure_kN_per_m2": 0.8,
+    "wind_suction_kN_per_m2": 0.3,
+    "wind_source": "standard_assumed",
+    "roof_cladding_kN_per_m2": 0.3,
+    "cladding_source": "standard_assumed",
+    "additional_dead_kN_per_m2": 10.0
+  },
+  "optimization_flags": {
+    "member_sizing": true
+  },
+  "notes": "User requested cross-section optimization to reduce stress/strength ratios. The previous run showed several members with utilization > 1.0 (overstressed), particularly in the top chord with HEA280-320 sections showing 1.04-1.18 utilization. The Generator should apply more conservative sizing to achieve target utilization ratios well below 1.0."
+}

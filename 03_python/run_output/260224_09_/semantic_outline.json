@@ -1,0 +1,37 @@
+{
+  "geometry_roof": {
+    "span_x_m": 15,
+    "length_y_m": 30,
+    "truss_count": 6
+  },
+  "geometry_truss": {
+    "typology": "warren",
+    "span_m": 15,
+    "height_m": 1.8,
+    "support_positions": [
+      [
+        0,
+        0
+      ],
+      [
+        15,
+        0
+      ]
+    ]
+  },
+  "loads": {
+    "snow_kN_per_m2": 4.5,
+    "snow_source": "standard_assumed",
+    "wind_pressure_kN_per_m2": 0.8,
+    "wind_suction_kN_per_m2": 0.3,
+    "wind_source": "standard_assumed",
+    "roof_cladding_kN_per_m2": 10.0,
+    "cladding_source": "user_defined"
+  },
+  "optimization_flags": {
+    "node_positioning": true,
+    "member_topology": true,
+    "member_sizing": true
+  },
+  "notes": "User requested: 1) Fix missing diagonal on left side, 2) Target max utilization ~80%, 3) Reduce height from 2.31m to 1.8m, 4) Use bigger cross-sections. Added topology optimization to address missing diagonal. Added member sizing optimization to target 80% utilization with larger sections."
+}

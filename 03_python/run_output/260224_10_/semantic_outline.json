@@ -1,0 +1,31 @@
+{
+  "geometry_roof": {
+    "span_x_m": 30,
+    "length_y_m": 15
+  },
+  "geometry_truss": {
+    "typology": "bowstring",
+    "span_m": 30,
+    "num_bays": 10,
+    "support_positions": [
+      [
+        0,
+        0
+      ],
+      [
+        30,
+        0
+      ]
+    ]
+  },
+  "loads": {
+    "snow_kN_per_m2": 4.5,
+    "snow_source": "standard_assumed",
+    "wind_pressure_kN_per_m2": 0.8,
+    "wind_suction_kN_per_m2": 0.3,
+    "wind_source": "standard_assumed",
+    "roof_cladding_kN_per_m2": 10.0,
+    "cladding_source": "user_defined"
+  },
+  "notes": "User specified bowstring truss with 10 bays and 10 kN/m\u00b2 roof weight. Truss spacing not stated - Generator will need to determine from roof dimensions. Height not specified - Generator will compute from span and bowstring typology."
+}

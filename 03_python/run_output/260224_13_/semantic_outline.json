@@ -1,0 +1,34 @@
+{
+  "geometry_roof": {
+    "span_x_m": 30,
+    "length_y_m": 15
+  },
+  "geometry_truss": {
+    "typology": "bowstring",
+    "span_m": 30,
+    "num_bays": 12,
+    "support_positions": [
+      [
+        0,
+        0
+      ],
+      [
+        30,
+        0
+      ]
+    ]
+  },
+  "loads": {
+    "snow_kN_per_m2": 4.5,
+    "snow_source": "standard_assumed",
+    "wind_pressure_kN_per_m2": 0.8,
+    "wind_suction_kN_per_m2": 0.3,
+    "wind_source": "standard_assumed",
+    "roof_cladding_kN_per_m2": 6.0,
+    "cladding_source": "user_defined"
+  },
+  "optimization_flags": {
+    "member_sizing": true
+  },
+  "notes": "User requested differentiated cross-section sizing based on individual member stress ratios rather than uniform sizing. The Generator should implement stress-based member sizing where each member gets the appropriate HEA profile based on its specific stress level and utilization ratio. Previous run showed all members using HEA1000 - the optimization should now vary cross-sections according to actual member forces and stresses."
+}

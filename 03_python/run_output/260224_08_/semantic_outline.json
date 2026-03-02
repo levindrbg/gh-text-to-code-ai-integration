@@ -1,0 +1,34 @@
+{
+  "geometry_roof": {
+    "span_x_m": 15,
+    "length_y_m": 30,
+    "truss_count": 6
+  },
+  "geometry_truss": {
+    "typology": "warren",
+    "span_m": 15,
+    "support_positions": [
+      [
+        0,
+        0
+      ],
+      [
+        15,
+        0
+      ]
+    ]
+  },
+  "loads": {
+    "snow_kN_per_m2": 4.5,
+    "snow_source": "standard_assumed",
+    "wind_pressure_kN_per_m2": 0.8,
+    "wind_suction_kN_per_m2": 0.3,
+    "wind_source": "standard_assumed",
+    "roof_cladding_kN_per_m2": 10.0,
+    "cladding_source": "user_defined"
+  },
+  "optimization_flags": {
+    "node_positioning": true
+  },
+  "notes": "User specified Warren truss and roof structure weight of 10 kN/m\u00b2. Requested height optimization for minimum depth. Truss count inferred as 6 trusses (5m spacing) for 30m building length. Height omitted - Generator will determine minimum viable height from structural requirements."
+}

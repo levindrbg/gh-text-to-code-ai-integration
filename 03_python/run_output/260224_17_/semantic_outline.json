@@ -1,0 +1,36 @@
+{
+  "geometry_roof": {
+    "span_x_m": 15,
+    "length_y_m": 30
+  },
+  "geometry_truss": {
+    "typology": "bowstring",
+    "span_m": 15,
+    "height_m": 2.5,
+    "num_bays": 10,
+    "support_positions": [
+      [
+        0,
+        0
+      ],
+      [
+        15,
+        0
+      ]
+    ]
+  },
+  "loads": {
+    "snow_kN_per_m2": 4.5,
+    "snow_source": "standard_assumed",
+    "wind_pressure_kN_per_m2": 0.8,
+    "wind_suction_kN_per_m2": 0.3,
+    "wind_source": "standard_assumed",
+    "roof_cladding_kN_per_m2": 0.3,
+    "cladding_source": "standard_assumed",
+    "additional_dead_kN_per_m2": 10.0
+  },
+  "optimization_flags": {
+    "member_sizing": true
+  },
+  "notes": "User requested reduced truss height (set to 2.5m from previous 3.75m) and uniform cross-sections for top and bottom chords. The Generator should apply the same profile selection logic to both chord types during member sizing optimization to achieve structural consistency between top and bottom chord members."
+}

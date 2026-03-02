@@ -1,0 +1,1 @@
+I've reduced the truss height to 2.5m (from the previous 3.75m) and noted that you want the same cross-sections for top and bottom chords. The Generator will apply uniform sizing logic to both chord types during optimization. All other parameters remain the same from your previous design. Ready for generation.

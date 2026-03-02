@@ -1,0 +1,32 @@
+{
+  "geometry_roof": {
+    "span_x_m": 15,
+    "length_y_m": 30
+  },
+  "geometry_truss": {
+    "typology": "bowstring",
+    "span_m": 15,
+    "num_bays": 10,
+    "support_positions": [
+      [
+        0,
+        0
+      ],
+      [
+        15,
+        0
+      ]
+    ]
+  },
+  "loads": {
+    "snow_kN_per_m2": 4.5,
+    "snow_source": "standard_assumed",
+    "wind_pressure_kN_per_m2": 0.8,
+    "wind_suction_kN_per_m2": 0.3,
+    "wind_source": "standard_assumed",
+    "roof_cladding_kN_per_m2": 0.3,
+    "cladding_source": "standard_assumed",
+    "additional_dead_kN_per_m2": 10.0
+  },
+  "notes": "User requested to add diagonals and fix missing top chords at the ends for the bowstring truss. The Generator should ensure complete top chord connectivity and add diagonal bracing members as needed for structural stability. Previous run showed incomplete top chord at supports - this should be corrected."
+}

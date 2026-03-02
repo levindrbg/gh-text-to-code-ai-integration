@@ -7,9 +7,6 @@ venv/
 01_docs/
 # Knowledge base data for Pinecone vector space (not needed for scripting)
 04_knowledge_base/
-# Runtime outputs (all go under run_output; do not create prompt/ or schemas/ at root)
-03_python/run_output/*
-!03_python/run_output/.gitkeep
 
 # Python
 __pycache__/
